@@ -46,9 +46,9 @@ if ($API->connect('216.226.75.139', 'admin', 'P@55w0rd!')) {
 };
 
 //Build device insert query
-$insertquery[0] = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,isActive,lastUpdateTime,lastInputState) VALUES ('gtg','Botruc40','LMBotruc','netmodem','Botruc40','Botruc40','Botruc40','Botruc40',1,".time().",40000) ON DUPLICATE KEY UPDATE groupID=VALUES(groupID),lastUpdateTime=VALUES(lastUpdateTime),displayName=VALUES(displayName),description=VALUES(description);";
+$insertquery[0] = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,isActive,lastUpdateTime,lastInputState) VALUES ('gtg','Botruc40','lmbotruc','netmodem','Botruc40','Botruc40','Botruc40','Botruc40',1,".time().",40000) ON DUPLICATE KEY UPDATE groupID=VALUES(groupID),lastUpdateTime=VALUES(lastUpdateTime),displayName=VALUES(displayName),description=VALUES(description);";
 
-$insertquery[1] = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,isActive,lastUpdateTime,lastInputState) VALUES ('gtg','Botruc41','LMBotruc','netmodem','Botruc41','Botruc41','Botruc41','Botruc41',1,".time().",40000) ON DUPLICATE KEY UPDATE groupID=VALUES(groupID),lastUpdateTime=VALUES(lastUpdateTime),displayName=VALUES(displayName),description=VALUES(description);";
+$insertquery[1] = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,isActive,lastUpdateTime,lastInputState) VALUES ('gtg','Botruc41','lmbotruc','netmodem','Botruc41','Botruc41','Botruc41','Botruc41',1,".time().",40000) ON DUPLICATE KEY UPDATE groupID=VALUES(groupID),lastUpdateTime=VALUES(lastUpdateTime),displayName=VALUES(displayName),description=VALUES(description);";
 
 //Build location insert queries
 $insertquery[2] = "REPLACE INTO EventData SET accountID='gtg',deviceID='Botruc40',timestamp=".time().",statusCode=61472,latitude=".$botruc40['latitude'].",longitude=".$botruc40['longitude'].";";
