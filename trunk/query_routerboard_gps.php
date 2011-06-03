@@ -1,6 +1,6 @@
 <?php
 
-require('/root/routeros_api.class.php');
+require('/usr/local/gts/routeros_api.class.php');
 
 $API = new routeros_api();
 
