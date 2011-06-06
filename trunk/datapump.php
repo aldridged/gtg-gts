@@ -24,7 +24,7 @@ $index=0;
 while ($ar = mysql_fetch_array($res, MYSQL_BOTH)) {
   $gid=explode(" ",$ar["NetModemName"]);
   $deviceinsertquery[$index] = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,isActive,lastUpdateTime,lastInputState) VALUES ('gtg','".$ar["NetModemId"]."','".$gid[0]."','netmodem','".$ar["ModemSn"]."','".$ar["NetModemId"]."','".$ar["NetModemName"]."','".$ar["NetModemName"]."',1,".time().",40000) ON DUPLICATE KEY UPDATE groupID=VALUES(groupID),lastUpdateTime=VALUES(lastUpdateTime),displayName=VALUES(displayName),description=VALUES(description);";
-  $geolocinsertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$ar["NetModemId"]."',timestamp=".(time()-(60*60*24*365)).",statusCode=61472,latitude=".($ar["LatDegrees"]+($ar["LatMinutes"]/60)+($ar["LatSeconds"]/3600)).",longitude=".(0-($ar["LongDegrees"]+($ar["LongMinutes"]/60)+($ar["LongSeconds"]/3600))).";";
+  $geolocinsertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$ar["NetModemId"]."',timestamp=".(time()-(60*60*24*365)).",statusCode=61472,latitude=".($ar["LatDegrees"]+($ar["LatMinutes"]/60)+($ar["LatSeconds"]/3600)).",longitude=".(0-($ar["LongDegrees"]-($ar["LongMinutes"]/60)-($ar["LongSeconds"]/3600))).";";
   $index++;
 };
 
