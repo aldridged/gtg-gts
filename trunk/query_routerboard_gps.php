@@ -19,7 +19,7 @@ if ($API->connect('216.226.76.91', 'admin', 'P@55w0rd!')) {
    $cleanlong=explode(" ",$ARRAY[0]['longitude']);
    
    $botruc41['latitude']=$cleanlat[1]+(trim($cleanlat[2],"'")/60)+(trim(trim($cleanlat[3],"'"),"'")/3600);
-   $botruc41['longitude']=0-$cleanlong[1]+(trim($cleanlong[2],"'")/60)+(trim(trim($cleanlong[3],"'"),"'")/3600);
+   $botruc41['longitude']=0-$cleanlong[1]-(trim($cleanlong[2],"'")/60)-(trim(trim($cleanlong[3],"'"),"'")/3600);
 
    $API->disconnect();
 
@@ -38,7 +38,7 @@ if ($API->connect('216.226.75.139', 'admin', 'P@55w0rd!')) {
    $cleanlong=explode(" ",$ARRAY[0]['longitude']);
 
    $botruc40['latitude']=$cleanlat[1]+(trim($cleanlat[2],"'")/60)+(trim(trim($cleanlat[3],"'"),"'")/3600);
-   $botruc40['longitude']=0-$cleanlong[1]+(trim($cleanlong[2],"'")/60)+(trim(trim($cleanlong[3],"'"),"'")/3600);
+   $botruc40['longitude']=0-$cleanlong[1]-(trim($cleanlong[2],"'")/60)-(trim(trim($cleanlong[3],"'"),"'")/3600);
 
 
    $API->disconnect();
