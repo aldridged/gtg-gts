@@ -20,6 +20,7 @@ foreach($xml->Folder->Placemark as $data) {
   $cleanname=explode(" ",$data->name);
   $cleandesc=explode("\n",$data->description);
   $cleanstatus=trim(sprintf("%s",$data->description->p));
+  $statuscode=explode(" ",$cleanstatus);
   $cleanid=explode(" ",$cleandesc[11]);
   $cleanspeed=explode(" ",$cleandesc[10]);
   $kvhdata[$index]['name']=$cleanname[3];
@@ -29,7 +30,10 @@ foreach($xml->Folder->Placemark as $data) {
   $kvhdata[$index]['ipaddr']=$cleanname[0];
   $kvhdata[$index]['id']=$cleanid[2];
   $kvhdata[$index]['status']=$cleanstatus;
-  $kvhdata[$index]['notes']=$cleandesc[3]."\n".$cleandesc[5]."\n".$cleandesc[6];
+  if($statuscode[4]=='In') { 
+    $kvhdata[$index]['statuscode']="40000";
+  } else $kvhdata[$index]['statuscode']="39999";
+  $kvhdata[$index]['notes']=$cleandesc[3]."<br />\n".$cleandesc[5]."<br />\n".$cleandesc[6];
   $index++;
 };
 
