@@ -26,7 +26,7 @@ foreach($xml->Folder->Placemark as $data) {
   $kvhdata[$index]['name']=$cleanname[3];
   $kvhdata[$index]['latitude']=$cleancoords[1];
   $kvhdata[$index]['longitude']=$cleancoords[0];
-  $kvhdata[$index]['speed']=$cleanspeed[3];
+  $kvhdata[$index]['speed']=$cleanspeed[3]*1.852;
   $kvhdata[$index]['ipaddr']=$cleanname[0];
   $kvhdata[$index]['id']=$cleanid[2];
   $kvhdata[$index]['status']=$cleanstatus;
