@@ -33,14 +33,14 @@ foreach($xml->Folder->Placemark as $data) {
   if($statuscode[4]=='In') { 
     $kvhdata[$index]['statuscode']="40000";
   } else $kvhdata[$index]['statuscode']="39999";
-  $kvhdata[$index]['notes']=$cleandesc[3]."<br />\n".$cleandesc[5]."<br />\n".$cleandesc[6];
+  $kvhdata[$index]['notes']=$cleandesc[3]."<br />".$cleandesc[5]."<br />".$cleandesc[6];
   $index++;
 };
 
 //Build Device and Location Insert Query
 $index=0;
 foreach($kvhdata as $data) {
-  $insertquery[$index] = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,isActive,lastUpdateTime,lastInputState,notes) VALUES ('gtg',".$data['id'].",'kvh','kvhmodem',".$data['name'].",".$data['id'].",".$data['name'].",".$data['name'].",1,".time().",".$data['statuscode'].",".$data['status']."<br>".$data['notes'].") ON DUPLICATE KEY UPDATE groupID=VALUES(groupID),lastUpdateTime=VALUES(lastUpdateTime),displayName=VALUES(displayName),description=VALUES(description),lastInputState=VALUES(lastInputState),notes=VALUES(notes);";
+  $insertquery[$index] = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,isActive,lastUpdateTime,lastInputState,notes) VALUES ('gtg','".$data['id']."','kvh','kvhmodem','".$data['name']."','".$data['id']."','".$data['name']."','".$data['name']."',1,".time().",".$data['statuscode'].",'".$data['status']."<br />".$data['notes']."') ON DUPLICATE KEY UPDATE groupID=VALUES(groupID),lastUpdateTime=VALUES(lastUpdateTime),displayName=VALUES(displayName),description=VALUES(description),lastInputState=VALUES(lastInputState),notes=VALUES(notes);";
   $index++;
   $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID=".$data['id'].",timestamp=".time().",statusCode=61472,latitude=".$data['latitude'].",longitude=".$data['longitude'].",speedKPH=".$data['speed'].";";
   $index++;
