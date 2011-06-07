@@ -173,9 +173,9 @@ while ($ar = mysql_fetch_array($res, MYSQL_BOTH)) {
   if($ar["rtt"]<0) $ar["rtt"] = 0;
   if($subindex == 3) {
     $realtime = strtotime($ar["MT"]);
-    $lstatsinsertquery[$index] = "UPDATE Device SET lastRtt=".$ar["rtt"]." WHERE deviceID='".$ar["unique_id"]."';";
+    $lstatsinsertquery[$index] = "UPDATE Device SET lastRtt=".($ar["rtt"]*0.6)." WHERE deviceID='".$ar["unique_id"]."';";
     $index++; 
-    $lstatsinsertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$ar["unique_id"]."',timestamp=".$realtime.",statusCode=64816,rtt=".$ar["rtt"].";";
+    $lstatsinsertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$ar["unique_id"]."',timestamp=".$realtime.",statusCode=64816,rtt=".($ar["rtt"]*0.6).";";
     $index++;
     };
   $subindex = ($subindex+1) % 4;
