@@ -46,6 +46,9 @@
 //     -Modified balloon display to add link to device details
 //  2011/04/14  David Aldridge
 //     -Modified balloon display to add link to email trouble ticket
+//  2011/06/07  David Aldridge
+//     -Modified balloon display to take into account KVH and Mikrotik,
+//     - and adjust Last RTT to 60%
 // ----------------------------------------------------------------------------
 // External funtions:
 //   new JSMap(String mapID)
@@ -1117,7 +1120,7 @@ function jsmCreatePushPin(rcdNdx, dsNdx, ppNdx, evRcd)
             for (var i = 0; i < evRcd.optDesc.length; i++) {
                 var v = evRcd.optDesc[i];
 		if (v.indexOf(".") != -1) var v = v.substring(0,v.indexOf(".")+3);
-                if (v != "") {
+                if ((v != "")&&(v != "0.0")) {
                     var d = OptionalEventFieldTitle(i);
                     var r = (d && (d != ""))?  ("<b>"+d+":</b> "+v) : v;
                     html += "<tr class='infoBoxRow'><td class='infoBoxCell'>"+r+"</td></tr>";
