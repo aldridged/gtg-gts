@@ -37,7 +37,32 @@ foreach($xml->Folder->Placemark as $data) {
   $index++;
 };
 
-// Display
-print_r($kvhdata);
+//Build Device and Location Insert Query
+$index=0;
+foreach($kvhdata as $data) {
+  $insertquery[$index] = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,isActive,lastUpdateTime,lastInputState,notes) VALUES ('gtg',$data['id'],'kvh','kvhmodem',$data['name'],$data['id'],$data['name'],$data['name'],1,".time().",$data['statuscode'],$data['status']."<br>".$data['notes']) ON DUPLICATE KEY UPDATE groupID=VALUES(groupID),lastUpdateTime=VALUES(lastUpdateTime),displayName=VALUES(displayName),description=VALUES(description),lastInputState=VALUES(lastInputState),notes=VALUES(notes);";
+  $index++;
+  $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID=$data['id'],timestamp=".time().",statusCode=61472,latitude=".$data['latitude'].",longitude=".$data['longitude'].",speedKPH=".$data['speed'].";";
+  $index++;
+};
 
+//Connect to GTS Database
+$link = mysql_connect('localhost','root','d@t@c0m#-db@s3');
+if (!$link) {
+  die("Cannot connect to GTS db");
+};
+
+// Select the GTS Database
+if (!mysql_select_db('gts')) {
+  die("Cannot select GTS db");
+};
+
+//Perform Device and location Inserts
+foreach($insertquery as $querytext)
+  {
+  $res = mysql_query($querytext);
+  };
+
+//Free GTS database connection
+mysql_close($link);
 ?>
