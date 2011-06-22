@@ -32,7 +32,7 @@ foreach($xml->Folder->Placemark as $data) {
   $kvhdata[$index]['status']=$cleanstatus;
   if($statuscode[4]=='In') { 
     $kvhdata[$index]['statuscode']="40000";
-  } else $kvhdata[$index]['statuscode']="39999";
+  } else $kvhdata[$index]['statuscode']="40002";
   $kvhdata[$index]['notes']=$cleandesc[3]."<br />".$cleandesc[5]."<br />".$cleandesc[6];
   $index++;
 };
