@@ -79,7 +79,7 @@ while ($ar = mysql_fetch_array($res, MYSQL_BOTH)) {
 mysql_free_result($res);
 
 // Query State Changes from nrd_archive database
-$res = mysql_query("(SELECT unique_id,timestamp,current_state,reason FROM state_change_log_0 ORDER BY timestamp DESC LIMIT 50000) UNION (SELECT unique_id,timestamp,current_state,reason FROM state_change_log_1 ORDER BY timestamp DESC LIMIT 50000) UNION (SELECT unique_id,timestamp,current_state,reason FROM state_change_log_2 ORDER BY timestamp DESC LIMIT 50000) UNION (SELECT unique_id,timestamp,current_state,reason FROM state_change_log_3 ORDER BY timestamp DESC LIMIT 50000) ORDER BY timestamp ASC;");
+$res = mysql_query("(SELECT unique_id,timestamp,current_state,reason FROM state_change_log_0 ORDER BY timestamp DESC LIMIT 12000) UNION (SELECT unique_id,timestamp,current_state,reason FROM state_change_log_1 ORDER BY timestamp DESC LIMIT 12000) UNION (SELECT unique_id,timestamp,current_state,reason FROM state_change_log_2 ORDER BY timestamp DESC LIMIT 12000) UNION (SELECT unique_id,timestamp,current_state,reason FROM state_change_log_3 ORDER BY timestamp DESC LIMIT 12000) ORDER BY timestamp ASC;");
 
 if (!$res) {
   die("Error cannot select state changes");
