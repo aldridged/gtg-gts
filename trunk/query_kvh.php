@@ -1,6 +1,17 @@
 <?php
 // Query KVH units from KML file
 
+// Function to really search an array
+function strinarray($searchtext, $dataarray)
+{
+$i=0;
+foreach($dataarray as $linedata) {
+  if(strstr($linedata,$searchtext)) break;
+  $i++;
+  };
+return $i;
+}
+
 // Connect and retrieve KML data
 $ch = curl_init('http://208.83.165.114/KMLs/BDA44F00-6C56-4337-819D-DF4E8D6DE462/p45.kml');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -19,21 +30,26 @@ foreach($xml->Folder->Placemark as $data) {
   $cleancoords=explode(",",$data->Point->coordinates);
   $cleanname=explode(" ",$data->name);
   $cleandesc=explode("\n",$data->description);
-  $cleanstatus=trim(sprintf("%s",$data->description->p));
+  $statuskey=strinarray('<p style',$cleandesc);
+  $cleanstatus=strip_tags($cleandesc[$statuskey]);
   $statuscode=explode(" ",$cleanstatus);
-  $cleanid=explode(" ",$cleandesc[11]);
-  $cleanspeed=explode(" ",$cleandesc[10]);
-  $kvhdata[$index]['name']=$cleanname[3];
+  $idkey=strinarray('ID',$cleandesc);
+  $speedkey=strinarray('Current speed',$cleandesc);
+  $notekey1=strinarray('Modem has been', $cleandesc);
+  $notekey2=strinarray('Eb',$cleandesc);
+  $cleanid=explode(" ",$cleandesc[$idkey]);
+  $cleanspeed=explode(" ",$cleandesc[$speedkey]);
+  $kvhdata[$index]['name']=$cleanname[2];
   $kvhdata[$index]['latitude']=$cleancoords[1];
   $kvhdata[$index]['longitude']=$cleancoords[0];
   $kvhdata[$index]['speed']=$cleanspeed[3]*1.852;
   $kvhdata[$index]['ipaddr']=$cleanname[0];
-  $kvhdata[$index]['id']=$cleanid[2];
+  $kvhdata[$index]['id']=strip_tags($cleanid[2]);
   $kvhdata[$index]['status']=$cleanstatus;
   if($statuscode[4]=='In') { 
     $kvhdata[$index]['statuscode']="40000";
   } else $kvhdata[$index]['statuscode']="40002";
-  $kvhdata[$index]['notes']=$cleandesc[3]."<br />".$cleandesc[5]."<br />".$cleandesc[6];
+  $kvhdata[$index]['notes']=strip_tags($cleandesc[$speedkey])."<br />".strip_tags($cleandesc[$notekey1])."<br />".strip_tags($cleandesc[$notekey2]);
   $index++;
 };
 
