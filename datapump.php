@@ -2,8 +2,8 @@
 /* Datapump - Devices from NMS to GTS */
 
 // Open link to NMS database
-//$link = mysql_connect('10.110.254.11','noc','datacom'); - LAF NMS
-$link = mysql_connect('10.110.252.11','noc','datacom');
+$link = mysql_connect('10.110.254.11','noc','datacom');
+/*$link = mysql_connect('10.110.252.11','noc','datacom'); - HOU */
 if (!$link) {
   die("Cannot connect to NMS db");
 };
