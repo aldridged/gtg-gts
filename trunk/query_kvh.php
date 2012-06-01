@@ -60,6 +60,8 @@ foreach($kvhdata as $data) {
   $index++;
   $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$data['id']."',timestamp=".time().",statusCode=61472,latitude=".$data['latitude'].",longitude=".$data['longitude'].",speedKPH=".$data['speed'].";";
   $index++;
+  $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$data['id']."',timestamp=".time().",statusCode=".$data['statuscode'].",rawData='".$data['status']."';";
+  $index++;
 };
 
 //Connect to GTS Database
