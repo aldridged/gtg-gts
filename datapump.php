@@ -56,7 +56,7 @@ if (!mysql_select_db('nrd_archive')) {
 };
 
 // Query Events from nrd_archive database
-$res = mysql_query("(SELECT unique_id,timestamp,msg FROM event_msg_0 ORDER BY timestamp DESC LIMIT 3000) UNION (SELECT unique_id,timestamp,msg FROM event_msg_1 ORDER BY timestamp DESC LIMIT 3000) UNION (SELECT unique_id,timestamp,msg FROM event_msg_2 ORDER BY timestamp DESC LIMIT 3000) UNION (SELECT unique_id,timestamp,msg FROM event_msg_3 ORDER BY timestamp DESC LIMIT 3000) ORDER BY timestamp DESC;");
+$res = mysql_query("(SELECT unique_id,timestamp,msg FROM event_msg_0 ORDER BY timestamp DESC LIMIT 6000) UNION (SELECT unique_id,timestamp,msg FROM event_msg_1 ORDER BY timestamp DESC LIMIT 6000) UNION (SELECT unique_id,timestamp,msg FROM event_msg_2 ORDER BY timestamp DESC LIMIT 6000) UNION (SELECT unique_id,timestamp,msg FROM event_msg_3 ORDER BY timestamp DESC LIMIT 6000) ORDER BY timestamp DESC;");
 
 if (!$res) {
   die("Error cannot select events");
@@ -80,7 +80,7 @@ while ($ar = mysql_fetch_array($res, MYSQL_BOTH)) {
 mysql_free_result($res);
 
 // Query State Changes from nrd_archive database
-$res = mysql_query("(SELECT unique_id,timestamp,current_state,reason FROM state_change_log_0 ORDER BY timestamp DESC LIMIT 12000) UNION (SELECT unique_id,timestamp,current_state,reason FROM state_change_log_1 ORDER BY timestamp DESC LIMIT 12000) UNION (SELECT unique_id,timestamp,current_state,reason FROM state_change_log_2 ORDER BY timestamp DESC LIMIT 12000) UNION (SELECT unique_id,timestamp,current_state,reason FROM state_change_log_3 ORDER BY timestamp DESC LIMIT 12000) ORDER BY timestamp ASC;");
+$res = mysql_query("(SELECT unique_id,timestamp,current_state,reason FROM state_change_log_0 ORDER BY timestamp DESC LIMIT 20000) UNION (SELECT unique_id,timestamp,current_state,reason FROM state_change_log_1 ORDER BY timestamp DESC LIMIT 20000) UNION (SELECT unique_id,timestamp,current_state,reason FROM state_change_log_2 ORDER BY timestamp DESC LIMIT 20000) UNION (SELECT unique_id,timestamp,current_state,reason FROM state_change_log_3 ORDER BY timestamp DESC LIMIT 20000) ORDER BY timestamp ASC;");
 
 if (!$res) {
   die("Error cannot select state changes");
