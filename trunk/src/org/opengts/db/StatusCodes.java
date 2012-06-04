@@ -79,6 +79,8 @@
 //     -Added STATUS_STATUS_OK, STATUS_STATUS_WARN, STATUS_STATUS_ERROR
 //  2011/02/01  David Aldridge
 //     -Added STATUS_STATUS_DISABLED
+//  2012/06/04  David Aldridge
+//     -Added STATUS_STATUS code descriptions
 // ----------------------------------------------------------------------------
 package org.opengts.db;
 
@@ -863,7 +865,10 @@ public class StatusCodes
 
         //       16-bit Code                 Name             Description                                                                     HiPri
         new Code(STATUS_NONE               , "NONE"         , I18N.getString(StatusCodes.class,"StatusCodes.none"          ,"None"          )       ), // always first
-
+	new Code(STATUS_STATUS_DISABLED	   ,"STATUS_DISABLED",I18N.getString(StatusCodes.class,"StatusCodes.status_disabled","Status Disabled" ) ),
+	new Code(STATUS_STATUS_OK	   , "STATUS_OK"     ,I18N.getString(StatusCodes.class,"StatusCodes.status_ok"      ,"Status Ok" ) ),
+        new Code(STATUS_STATUS_WARN        , "STATUS_WARN"   ,I18N.getString(StatusCodes.class,"StatusCodes.status_warn"    ,"Status Warning" ) ),
+	new Code(STATUS_STATUS_ERROR       , "STATUS_ERROR"  ,I18N.getString(StatusCodes.class,"StatusCodes.status_error"   ,"Status Error" ) ),
         new Code(STATUS_GFMI_CMD_03        , "GMFI.03"      , I18N.getString(StatusCodes.class,"StatusCodes.gfmi_03"       ,"GFMI_SendMsg3" )       ), // send non-ack message
         new Code(STATUS_GFMI_CMD_04        , "GMFI.04"      , I18N.getString(StatusCodes.class,"StatusCodes.gfmi_04"       ,"GFMI_SendMsg4" )       ), // send ack message
         new Code(STATUS_GFMI_CMD_05        , "GMFI.05"      , I18N.getString(StatusCodes.class,"StatusCodes.gfmi_05"       ,"GFMI_SendMsg5" )       ), // send answerable message
