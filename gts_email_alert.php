@@ -9,7 +9,7 @@ system("echo '$mes' | mail -s '$subject' $to -b trouble@getdatacom.com --f alert
 };
 
 // Open link to GTS database
-$link = mysql_connect('localhost','root','d@t@com#-db@s3');
+$link = mysql_connect('localhost','root','d@t@c0m#-db@s3');
 if (!$link) {
   die("Cannot connect to GTS db");
 };
