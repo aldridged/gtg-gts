@@ -39,7 +39,7 @@ while ($ar = mysql_fetch_array($res, MYSQL_BOTH)) {
     };
     
 // If last two statuses are not the same and this happened in the last 5 minutes (300 seconds) then email
-  if(($returnstatus[0][0]<>$returnstatus[1][0])&&($returnstatus[0][2]-time()<300)) email_alert($dev,$returnstatus[0][1],$email);
+  if(($returnstatus[0][0]<>$returnstatus[1][0])&&(time()-$returnstatus[0][2]<300)) email_alert($dev,$returnstatus[0][1],$email);
   
 // Clean up our mess
   unset($returnstatus);
