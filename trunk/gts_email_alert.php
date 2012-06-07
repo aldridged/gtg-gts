@@ -20,7 +20,7 @@ if (!mysql_select_db('gts')) {
 };
 
 // Query Devices with contact emails from the GTS database
-$res = mysql_query("SELECT deviceID,contactEmail FROM User,GroupList,DeviceList WHERE User.userID=GroupList.userID AND GroupList.groupID=DeviceList.groupID AND User.contactEmail like '%@%';");
+$res = mysql_query("SELECT Device.deviceID,Device.displayName,contactEmail FROM User,GroupList,DeviceList,Device WHERE Device.deviceID=DeviceList.deviceID AND User.userID=GroupList.userID AND GroupList.groupID=DeviceList.groupID AND User.contactEmail like '%@%';");
 if (!$res) {
   die("Error cannot select devices");
 };
@@ -28,8 +28,9 @@ if (!$res) {
 // Parse out status changes for listed deviceIDs
 while ($ar = mysql_fetch_array($res, MYSQL_BOTH)) {
   $dev = $ar['deviceID'];
+  $devname = $ar['displayName'];
   $email = $ar['contactEmail'];
-  $stati = mysql_query("SELECT deviceID,timestamp,statusCode,rawData FROM EventData WHERE deviceID='".$dev."' ORDER BY timestamp LIMIT 2;");
+  $stati = mysql_query("SELECT deviceID,timestamp,statusCode,rawData FROM EventData WHERE deviceID='".$dev."' AND statusCode<>61472 AND statusCode<>64816 ORDER BY timestamp LIMIT 2;");
   $idx = 0;
   while ($sr = mysql_fetch_array($stati,MYSQL_BOTH)) { 
     $returnstatus[$idx][0]=$sr['statusCode'];
@@ -39,8 +40,13 @@ while ($ar = mysql_fetch_array($res, MYSQL_BOTH)) {
     };
     
 // If last two statuses are not the same and this happened in the last 5 minutes (300 seconds) then email
-  if(($returnstatus[0][0]<>$returnstatus[1][0])&&(time()-$returnstatus[0][2]<300)) email_alert($dev,$returnstatus[0][1],$email);
-  
+  if(($returnstatus[0][0]<>$returnstatus[1][0])&&(time()-$returnstatus[0][2]<300)) email_alert($devname,$returnstatus[0][1],$email);
+
+// DEBUG - Remove after you figure out whats wrong
+/*  echo($devname." - ".$email." :\n");
+  print_r($returnstatus);
+  echo("\n\n");
+*/
 // Clean up our mess
   unset($returnstatus);
   mysql_free_result($stati); 
