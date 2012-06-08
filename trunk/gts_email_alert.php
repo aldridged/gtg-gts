@@ -30,7 +30,7 @@ while ($ar = mysql_fetch_array($res, MYSQL_BOTH)) {
   $dev = $ar['deviceID'];
   $devname = $ar['displayName'];
   $email = $ar['contactEmail'];
-  $stati = mysql_query("SELECT deviceID,timestamp,statusCode,rawData FROM EventData WHERE deviceID='".$dev."' AND statusCode<>61472 AND statusCode<>64816 ORDER BY timestamp LIMIT 2;");
+  $stati = mysql_query("SELECT deviceID,timestamp,statusCode,rawData FROM EventData WHERE deviceID='".$dev."' AND statusCode<>61472 AND statusCode<>64816 ORDER BY timestamp DESC LIMIT 2;");
   $idx = 0;
   while ($sr = mysql_fetch_array($stati,MYSQL_BOTH)) { 
     $returnstatus[$idx][0]=$sr['statusCode'];
