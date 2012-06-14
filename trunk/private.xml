@@ -843,7 +843,7 @@ Notes:
         <Property key="zone.map.corridor">false</Property>              <!-- [true|false] display corridor option (not supported) -->
 
         <!-- include target geozones on map (a pushpin must be in the Geozone for it to be displayed) -->
-        <Property key="map.includeGeozones">false</Property>
+        <Property key="map.includeGeozones">true</Property>
 
         <!-- route line -->
         <Property key="map.routeLine">true</Property>                   <!-- include travel route line -->
