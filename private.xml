@@ -348,6 +348,7 @@ Notes:
         <Property key="trackMap.showDeviceLink">false</Property>                <!-- [true|false] show Device Link (requires Device support) -->
         <Property key="trackMap.showBatteryLevel">false</Property>              <!-- [false|icon|percent|default] show last Battery Level (requires Device support) -->
         <Property key="trackMap.useRouteDisplayColor">true</Property>           <!-- [true|false] use Device 'displayColor' for route-line color -->
+	<Property key="trackMap.showAllContainedGeozones">true</Property>
 
         <!-- GoogleKML properties -->
         <Property key="googleKML.lastPushpinID">blue</Property>                 <!-- Color ID of the last event pushpin -->
