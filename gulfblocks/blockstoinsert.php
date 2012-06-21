@@ -10,7 +10,7 @@ $coordfile = file('blocks.gen');
 // Loop through the data and extract the ID and block names
 echo "Extracting block names...\n";
 foreach ($datafile as $line_num => $line) {
-  if($line_num % 10 == 0) $namekey=trim($line);
+  if($line_num % 10 == 0) $namekey=(trim($line))-1;
   if($line_num % 10 == 6) $insertdata[$namekey]['blockname']=trim(trim($line),'"');
 };
 
@@ -46,7 +46,7 @@ echo "Creating insert query...\n";
 $index=1;
 foreach ($insertdata as $blockrecord) {
   $coordindex = 1;
-  $insertquery[$index] = "REPLACE INTO Geozone SET accountID='gtg',geozoneID='".$blockrecord['blockname']."',reverseGeocode=1,arrivalZone=1,departureZone=1,zoneType=3,displayName='".$blockrecord['blockname']."',description='".$blockrecord['blockname']."'";
+  $insertquery[$index] = "REPLACE INTO Geozone SET accountID='gtg',geozoneID='".strtolower($blockrecord['blockname'])."',reverseGeocode=1,arrivalZone=1,departureZone=1,zoneType=3,displayName='".$blockrecord['blockname']."',description='".$blockrecord['blockname']."'";
   while ($coordindex <= $blockrecord['count']) {
     $insertquery[$index] .= ",latitude".$coordindex."=".$blockrecord['lat'.$coordindex].",longitude".$coordindex."=".$blockrecord['long'.$coordindex];
     $coordindex++;
