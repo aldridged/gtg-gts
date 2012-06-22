@@ -46,6 +46,8 @@ function handleGeozone($link,$devid,$lat,$long) {
 	    $res = mysql_query($insert,$link);
         }
     };
+    
+  if(isset($geodesc)) { return($geodesc); } else { return(""); };
 }
 
 // Read in mib
@@ -128,12 +130,13 @@ if (!mysql_select_db('gts')) {
 
 $deviceinsertquery = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,isActive,lastUpdateTime,lastInputState,ipAddressCurrent,lastReason,lastSnrCalDown,lastSnrCalUp,lastPowerDbm,lastRtt) VALUES ";
 
-$geolocinsertquery = "REPLACE INTO EventData (accountID,deviceID,timestamp,statusCode,latitude,longitude) VALUES ";
+$geolocinsertquery = "REPLACE INTO EventData (accountID,deviceID,timestamp,statusCode,latitude,longitude,address) VALUES ";
 
 $statusinsertquery = "REPLACE INTO EventData (accountID,deviceID,timestamp,statusCode,rawData) VALUES ";
 
 foreach($netmodem as $nm) {
   if($nm['typeid']=="remote(3)") {
+    $addr = "";
     $stati = array(40000,40001,40002,40002,40002);
     $gid=explode(" ",$nm['nmname']);
     $n = sscanf($nm['geoloc'], "LAT-LONG : [LAT = %fN LONG = %fW", $lat, $long);
@@ -146,10 +149,10 @@ foreach($netmodem as $nm) {
 
     if($nm['nmstate']>=2) {$reason = $nm['nmalarms'];} else {$reason = $nm['nmwarnings'];};
     
-    if((stripos($gid[0],"Bordelon-")!==false)||($gid[0]=="L&M")) handleGeozone($link,$nm['nmid'],$lat,$long);
+    if((stripos($gid[0],"Bordelon-")!==false)||($gid[0]=="L&M")) $addr=handleGeozone($link,$nm['nmid'],$lat,$long);
 
     $deviceinsertquery .= "('gtg',".$nm['nmid'].",'".$gid[0]."','netmodem','".$nm['netdid']."','".$nm['nmid']."','".$nm['nmname']."','".$nm['nmname']."',1,".time().",".$stati[$nm['nmstate']].",'".$nm['ethipadr']."','".$reason."',".$nm['downsnr'].",".$nm['upsnr'].",".$nm['txpower'].",".$latency."),";
-    $geolocinsertquery .= "('gtg',".$nm['nmid'].",".time().",61472,".$lat.",".$long."),";
+    $geolocinsertquery .= "('gtg',".$nm['nmid'].",".time().",61472,".$lat.",".$long.",'".$addr."'),";
     $statusinsertquery .= "('gtg',".$nm['nmid'].",".time().",".$stati[$nm['nmstate']].",'".$reason."'),";
     };
   };
