@@ -1,5 +1,54 @@
 <?php
 // Query KVH units from KML file
+// Added Geozone support
+
+// Function to handle inserting Geozone arrival/departure codes
+function handleGeozone($link,$devid,$lat,$long) {
+  // Find previous geozone events for devid
+  $res = mysql_query("SELECT geozoneID,statusCode,address FROM EventData WHERE (deviceID='".$devid."' AND (statusCode=61968 OR statusCode=62000) AND geozoneID IS NOT NULL) ORDER BY timestamp DESC LIMIT 1",$link);
+
+  // If there are events
+  if(mysql_num_rows($res)>0) {
+    list($geozoneID,$statusCode,$oldaddr) = mysql_fetch_row($res);
+
+    // If the previous event is an arrival
+    if($statusCode==61968) {
+      $res = mysql_query("SELECT geozoneID,displayName FROM Geozone WHERE (minLatitude<=".$lat." AND maxLatitude>=".$lat." AND minLongitude<=".$long." AND maxLongitude>=".$long.") LIMIT 1",$link);
+      if(mysql_num_rows($res)>0) {
+        list($newgeozoneID,$geodesc) = mysql_fetch_row($res);
+        if($newgeozoneID<>$geozoneID) { 
+          // Insert departure from previous and arrival in current
+          $insert = "INSERT INTO EventData (accountID,deviceID,geozoneID,statusCode,address,timestamp) VALUES (";
+          $insert .= "'gtg','".$devid."','".$geozoneID."',62000,'".$oldaddr."',".time()."),(";
+          $insert .= "'gtg','".$devid."','".$newgeozoneID."',61968,'".$geodesc."',".(time()+10).")";
+          $res = mysql_query($insert,$link);
+          }
+        } else {
+        // Insert departure for current geozone
+	      $insert = "INSERT INTO EventData (accountID,deviceID,geozoneID,statusCode,address,timestamp) VALUES ('gtg','".$devid."','".$geozoneID."',62000,'".$oldaddr."',".time().")";
+	      $res = mysql_query($insert,$link);
+        }
+      }  else {
+      // Last event was a departure so insert arrival information
+      $res = mysql_query("SELECT geozoneID,displayName FROM Geozone WHERE (minLatitude<=".$lat." AND maxLatitude>=".$lat." AND minLongitude<=".$long." AND maxLongitude>=".$long.") LIMIT 1",$link);
+      if(mysql_num_rows($res)>0) {
+        list($newgeozoneID,$geodesc) = mysql_fetch_row($res);
+        $insert = "INSERT INTO EventData (accountID,deviceID,geozoneID,statusCode,address,timestamp) VALUES ('gtg','".$devid."','".$newgeozoneID."',61968,'".$geodesc."',".time().")";
+	    $res = mysql_query($insert,$link);
+        }
+      }
+    }  else {
+      // First geozone event so insert arrival information
+      $res = mysql_query("SELECT geozoneID,displayName FROM Geozone WHERE (minLatitude<=".$lat." AND maxLatitude>=".$lat." AND minLongitude<=".$long." AND maxLongitude>=".$long.") LIMIT 1",$link);
+      if(mysql_num_rows($res)>0) {
+        list($newgeozoneID,$geodesc) = mysql_fetch_row($res);
+        $insert = "INSERT INTO EventData (accountID,deviceID,geozoneID,statusCode,address,timestamp) VALUES ('gtg','".$devid."','".$newgeozoneID."',61968,'".$geodesc."',".time().")";
+	    $res = mysql_query($insert,$link);
+        }
+    };
+    
+  if(isset($geodesc)) { return($geodesc); } else { return(""); };
+}
 
 // Function to really search an array
 function strinarray($searchtext, $dataarray)
@@ -23,6 +72,17 @@ $result = curl_exec($ch);
 
 // Convert returned XML to array
 $xml = simplexml_load_string($result);
+
+//Connect to GTS Database
+$link = mysql_connect('localhost','root','d@t@c0m#-db@s3');
+if (!$link) {
+  die("Cannot connect to GTS db");
+};
+
+// Select the GTS Database
+if (!mysql_select_db('gts')) {
+  die("Cannot select GTS db");
+};
 
 // Parse returned XML
 $index=0;
@@ -50,6 +110,7 @@ foreach($xml->Folder->Placemark as $data) {
     $kvhdata[$index]['statuscode']="40000";
   } else $kvhdata[$index]['statuscode']="40002";
   $kvhdata[$index]['notes']=strip_tags($cleandesc[$speedkey])."<br />".strip_tags($cleandesc[$notekey1])."<br />".strip_tags($cleandesc[$notekey2]);
+  $kvhdata[$index]['address']=handleGeozone($link,strip_tags($cleanid[2]),$cleancoords[1],$cleancoords[0]);
   $index++;
 };
 
@@ -58,21 +119,10 @@ $index=0;
 foreach($kvhdata as $data) {
   $insertquery[$index] = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,isActive,lastUpdateTime,lastInputState,notes) VALUES ('gtg','".$data['id']."','kvh','netmodem','".$data['name']."','".$data['id']."','".$data['name']."','".$data['name']."',1,".time().",".$data['statuscode'].",'".$data['status']."<br />".$data['notes']."') ON DUPLICATE KEY UPDATE groupID=VALUES(groupID),lastUpdateTime=VALUES(lastUpdateTime),lastInputState=VALUES(lastInputState),notes=VALUES(notes);";
   $index++;
-  $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$data['id']."',timestamp=".time().",statusCode=61472,latitude=".$data['latitude'].",longitude=".$data['longitude'].",speedKPH=".$data['speed'].";";
+  $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$data['id']."',timestamp=".time().",statusCode=61472,latitude=".$data['latitude'].",longitude=".$data['longitude'].",speedKPH=".$data['speed'].",address='".$data['address']."';";
   $index++;
   $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$data['id']."',timestamp=".time().",statusCode=".$data['statuscode'].",rawData='".$data['status']."';";
   $index++;
-};
-
-//Connect to GTS Database
-$link = mysql_connect('localhost','root','d@t@c0m#-db@s3');
-if (!$link) {
-  die("Cannot connect to GTS db");
-};
-
-// Select the GTS Database
-if (!mysql_select_db('gts')) {
-  die("Cannot select GTS db");
 };
 
 //Perform Device and location Inserts
