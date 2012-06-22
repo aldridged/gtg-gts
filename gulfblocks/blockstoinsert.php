@@ -20,12 +20,9 @@ $coordkey = 1;
 foreach ($coordfile as $line_num => $line) {
   $contents = preg_split("/[\s]+/",$line);
   if(count($contents)==5) {
-    $coordkey = 2;
+    $coordkey = 1;
     $namekey=trim($contents[1]);
-    $lat=substr(trim($contents[3]),2,2).".".substr(trim($contents[3]),4,13);
-    $long="-".substr(trim($contents[2]),3,2).".".substr(trim($contents[2]),5,13);
-    $insertdata[$namekey]['lat1']=$lat;
-    $insertdata[$namekey]['long1']=$long;
+    // Ignore first set of coordinates - they are the center of the block
   }
   else if (count($contents)==4) {
     $latkey = "lat".$coordkey;
@@ -37,7 +34,8 @@ foreach ($coordfile as $line_num => $line) {
     $coordkey++;
   }
   else {
-    $insertdata[$namekey]['count']=($coordkey-1);
+    $insertdata[$namekey]['count']=($coordkey-2);
+    // Set to -2 to drop last coordinate - which is also center of block
   };
 };
 
@@ -46,11 +44,20 @@ echo "Creating insert query...\n";
 $index=1;
 foreach ($insertdata as $blockrecord) {
   $coordindex = 1;
+  $minLat = $blockrecord['lat1'];
+  $maxLat = $blockrecord['lat1'];
+  $minLong = $blockrecord['long1'];
+  $maxLong = $blockrecord['long1'];
   $insertquery[$index] = "REPLACE INTO Geozone SET accountID='gtg',geozoneID='".strtolower($blockrecord['blockname'])."',reverseGeocode=1,arrivalZone=1,departureZone=1,zoneType=3,displayName='".$blockrecord['blockname']."',description='".$blockrecord['blockname']."'";
   while ($coordindex <= $blockrecord['count']) {
     $insertquery[$index] .= ",latitude".$coordindex."=".$blockrecord['lat'.$coordindex].",longitude".$coordindex."=".$blockrecord['long'.$coordindex];
+    if($blockrecord['lat'.$coordindex]<$minLat) $minLat = $blockrecord['lat'.$coordindex];
+    if($blockrecord['lat'.$coordindex]>$maxLat) $maxLat = $blockrecord['lat'.$coordindex];
+    if($blockrecord['long'.$coordindex]<$minLong) $minLong = $blockrecord['long'.$coordindex];
+    if($blockrecord['long'.$coordindex]>$maxLong) $maxLong = $blockrecord['long'.$coordindex];
     $coordindex++;
   };
+  $insertquery[$index] .= ",minLatitude=".$minLat.",maxLatitude=".$maxLat.",minLongitude=".$minLong.",maxLongitude=".$maxLong;
   $insertquery[$index] .= ",lastUpdateTime=".time().",creationTime=".time().";";
   $index++;
 };
