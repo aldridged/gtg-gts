@@ -1,6 +1,32 @@
 <?php
 // Query KVH units from KML file
 // Added Geozone support
+// Added heading support
+
+//Function to calculate Bearing between two coordinates
+function calculateBearing($lat1,$long1,$lat2,$long2) {
+  $y = $lat2-$lat1;
+  $x = $long2-$long1;
+    
+  if($x==0 AND $y==0){ return 0; };
+  return ($x < 0) ? rad2deg(atan2($x,$y))+360 : rad2deg(atan2($x,$y)); 
+ };
+
+// Function to handle inserting heading data
+function handleHeading($link,$devid,$lat,$long) {
+  // Find previous location event for devid
+  $res = mysql_query("SELECT statusCode,timestamp,latitude,longitude FROM EventData WHERE (deviceID='".$devid."' AND (latitude<>".$lat." OR longitude<>".$long.") AND statusCode=61472) ORDER BY timestamp DESC LIMIT 1",$link);
+  
+  // If there is a previous location
+  if(mysql_num_rows($res)>0) {
+    list($statusCode,$lasttime,$lastlat,$lastlong) = mysql_fetch_row($res);
+ 
+    // calculate heading and speed
+    $heading = calculateBearing($lastlat,$lastlong,$lat,$long);
+    };
+    
+  if(isset($heading)) { return($heading); } else { return(0); };
+  }  
 
 // Function to handle inserting Geozone arrival/departure codes
 function handleGeozone($link,$devid,$lat,$long) {
@@ -111,6 +137,7 @@ foreach($xml->Folder->Placemark as $data) {
   } else $kvhdata[$index]['statuscode']="40002";
   $kvhdata[$index]['notes']=strip_tags($cleandesc[$speedkey])."<br />".strip_tags($cleandesc[$notekey1])."<br />".strip_tags($cleandesc[$notekey2]);
   $kvhdata[$index]['address']=handleGeozone($link,strip_tags($cleanid[2]),$cleancoords[1],$cleancoords[0]);
+  $kvhdata[$index]['heading']=handleHeading($link,strip_tags($cleanid[2]),$cleancoords[1],$cleancoords[0]);
   $index++;
 };
 
@@ -119,7 +146,7 @@ $index=0;
 foreach($kvhdata as $data) {
   $insertquery[$index] = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,isActive,lastUpdateTime,lastInputState,notes) VALUES ('gtg','".$data['id']."','kvh','netmodem','".$data['name']."','".$data['id']."','".$data['name']."','".$data['name']."',1,".time().",".$data['statuscode'].",'".$data['status']."<br />".$data['notes']."') ON DUPLICATE KEY UPDATE groupID=VALUES(groupID),lastUpdateTime=VALUES(lastUpdateTime),lastInputState=VALUES(lastInputState),notes=VALUES(notes);";
   $index++;
-  $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$data['id']."',timestamp=".time().",statusCode=61472,latitude=".$data['latitude'].",longitude=".$data['longitude'].",speedKPH=".$data['speed'].",address='".$data['address']."';";
+  $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$data['id']."',timestamp=".time().",statusCode=61472,latitude=".$data['latitude'].",longitude=".$data['longitude'].",speedKPH=".$data['speed'].",address='".$data['address']."',heading=".$data['heading'].";";
   $index++;
   $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$data['id']."',timestamp=".time().",statusCode=".$data['statuscode'].",rawData='".$data['status']."';";
   $index++;
