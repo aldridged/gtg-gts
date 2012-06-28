@@ -1,6 +1,44 @@
 <?php
 /* Datapump - Devices from NMS to GTS (SNMP Version) */
 /* Added Geozone support for bordelon and LMbotruc */
+/* Added Speed and Heading Support */
+
+//Function to calculate Bearing between two coordinates
+function calculateBearing($lat1,$long1,$lat2,$long2) {
+  $y = $lat2-$lat1;
+  $x = $long2-$long1;
+    
+  if($x==0 AND $y==0){ return 0; };
+  return ($x < 0) ? rad2deg(atan2($x,$y))+360 : rad2deg(atan2($x,$y)); 
+ };
+
+//Function to calculate speed of movement between two coordinates in 10 minutes
+function calculateSpeed($lat1,$long1,$lat2,$long2,$deltatime) {
+  $dist = acos(sin($lat1)*sin($lat2)+cos($lat1)*cos($lat2)*cos($long2-$long1))*6.371;
+  return($dist/($deltatime/3600));
+  };
+
+// Function to handle inserting speed and heading data
+function handleSpeed($link,$devid,$lat,$long) {
+  // Find previous location event for devid
+  $res = mysql_query("SELECT statusCode,timestamp,latitude,longitude FROM EventData WHERE (deviceID='".$devid."' AND statusCode=61472) ORDER BY timestamp DESC LIMIT 1",$link);
+  
+  // If there is a previous location
+  if(mysql_num_rows($res)>0) {
+    list($statusCode,$lasttime,$lastlat,$lastlong) = mysql_fetch_row($res);
+    
+    // get time diff
+    $deltatime = time()-$lasttime;
+    
+    // calculate heading and speed
+    $heading = calculateBearing($lastlat,$lastlong,$lat,$long);
+    $speed = calculateSpeed($lastlat,$lastlong,$lat,$long,$deltatime);
+    
+    $retval = array($speed,$heading);
+    };
+    
+  if(isset($retval)) { return($retval); } else { return(array(0,0)); };
+  }  
 
 // Function to handle inserting Geozone arrival/departure codes
 function handleGeozone($link,$devid,$lat,$long) {
@@ -130,13 +168,14 @@ if (!mysql_select_db('gts')) {
 
 $deviceinsertquery = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,isActive,lastUpdateTime,lastInputState,ipAddressCurrent,lastReason,lastSnrCalDown,lastSnrCalUp,lastPowerDbm,lastRtt) VALUES ";
 
-$geolocinsertquery = "REPLACE INTO EventData (accountID,deviceID,timestamp,statusCode,latitude,longitude,address) VALUES ";
+$geolocinsertquery = "REPLACE INTO EventData (accountID,deviceID,timestamp,statusCode,latitude,longitude,address,heading,speedKPH) VALUES ";
 
 $statusinsertquery = "REPLACE INTO EventData (accountID,deviceID,timestamp,statusCode,rawData) VALUES ";
 
 foreach($netmodem as $nm) {
   if($nm['typeid']=="remote(3)") {
     $addr = "";
+    $speedhead = array(0,0);
     $stati = array(40000,40001,40002,40002,40002);
     $gid=explode(" ",$nm['nmname']);
     $n = sscanf($nm['geoloc'], "LAT-LONG : [LAT = %fN LONG = %fW", $lat, $long);
@@ -149,10 +188,13 @@ foreach($netmodem as $nm) {
 
     if($nm['nmstate']>=2) {$reason = $nm['nmalarms'];} else {$reason = $nm['nmwarnings'];};
     
-    if((stripos($gid[0],"Bordelon-")!==false)||($gid[0]=="L&M")) $addr=handleGeozone($link,$nm['nmid'],$lat,$long);
+    if((stripos($gid[0],"Bordelon-")!==false)||($gid[0]=="L&M")) {
+      $addr=handleGeozone($link,$nm['nmid'],$lat,$long);
+      $speedhead=handleSpeed($link,$nm['nmid'],$lat,$long);
+      };
 
     $deviceinsertquery .= "('gtg',".$nm['nmid'].",'".$gid[0]."','netmodem','".$nm['netdid']."','".$nm['nmid']."','".$nm['nmname']."','".$nm['nmname']."',1,".time().",".$stati[$nm['nmstate']].",'".$nm['ethipadr']."','".$reason."',".$nm['downsnr'].",".$nm['upsnr'].",".$nm['txpower'].",".$latency."),";
-    $geolocinsertquery .= "('gtg',".$nm['nmid'].",".time().",61472,".$lat.",".$long.",'".$addr."'),";
+    $geolocinsertquery .= "('gtg',".$nm['nmid'].",".time().",61472,".$lat.",".$long.",'".$addr."',".$speedhead[1].",".$speedhead[0]."),";
     $statusinsertquery .= "('gtg',".$nm['nmid'].",".time().",".$stati[$nm['nmstate']].",'".$reason."'),";
     };
   };
