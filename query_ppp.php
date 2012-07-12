@@ -56,6 +56,6 @@ foreach ($oldchange as $name=>$ip) {
 // Email the alerts
 if(!$tunnelup=="") email_alert($tunnelup,"MikroTik Tunnels UP");
 if(!$tunneldown=="") email_alert($tunneldown, "MikroTik Tunnels DOWN");
-if(!$tunnelchange=="") email_alert($tunnelchange, "MikroTike Tunnels CHANGED IP");
+if(!$tunnelchange=="") email_alert($tunnelchange, "MikroTik Tunnels CHANGED IP");
 ?>
 
