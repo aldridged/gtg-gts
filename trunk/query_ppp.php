@@ -2,7 +2,7 @@
 // Email Alerts Function
 function email_alert($message, $subject)
 {
-system("echo '$message' | mail -s '$subject' engineering@getdatacom.com -- -f alerts@mydatacomgts.com");
+system("echo '$message' | mail -s '$subject' trouble@getdatacom.com -- -f alerts@mydatacomgts.com");
 };
 
 // Read old states from file
