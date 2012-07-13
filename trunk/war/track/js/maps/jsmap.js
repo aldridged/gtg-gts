@@ -1119,7 +1119,10 @@ function jsmCreatePushPin(rcdNdx, dsNdx, ppNdx, evRcd)
         if (evRcd.optDesc && (evRcd.optDesc.length > 0)) {
             for (var i = 0; i < evRcd.optDesc.length; i++) {
                 var v = evRcd.optDesc[i];
-		if (v.indexOf(".") != -1) var v = v.substring(0,v.indexOf(".")+3);
+		if (v.indexOf(".") != -1) {
+                    var multv = v.split(".");
+                    if (multv.length == 2) var v = v.substring(0,v.indexOf(".")+5);
+                    }
                 if ((v != "")&&(v != "0.0")) {
                     var d = OptionalEventFieldTitle(i);
                     var r = (d && (d != ""))?  ("<b>"+d+":</b> "+v) : v;
