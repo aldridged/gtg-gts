@@ -41,16 +41,16 @@ $tunnelchange = "";
 $tunnelup = "";
 foreach ($newchange as $name=>$ip) {
   if(isset($oldstate[$name])) {
-    $tunnelchange .= "Tunnel connecting IP change for ".$name." from ".$oldstate[$name]. " to ".$ip."\n";
+    $tunnelchange .= "Tunnel connecting IP change for ".$name." from ".$oldstate[$name]. " to ".$ip."\r\n";
   } else {
-    $tunnelup .= "Tunnel ".$name." came up with connecting IP ".$ip."\n";
+    $tunnelup .= "Tunnel ".$name." came up with connecting IP ".$ip."\r\n";
   };
 };
 
 // Figure out tunnel downs
 $tunneldown = "";
 foreach ($oldchange as $name=>$ip) {
-  if(!isset($currentstate[$name])) $tunneldown .= "Tunnel ".$name." is down - last connecting IP ".$ip."\n";
+  if(!isset($currentstate[$name])) $tunneldown .= "Tunnel ".$name." is down - last connecting IP ".$ip."\r\n";
 };
 
 // Email the alerts
