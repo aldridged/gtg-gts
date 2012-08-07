@@ -194,7 +194,7 @@ foreach($netmodem as $nm) {
       };
 
     $deviceinsertquery .= "('gtg',".$nm['nmid'].",'".$gid[0]."','netmodem','".$nm['netdid']."','".$nm['nmid']."','".$nm['nmname']."','".$nm['nmname']."',1,".time().",".$stati[$nm['nmstate']].",'".$nm['ethipadr']."','".$reason."',".$nm['downsnr'].",".$nm['upsnr'].",".$nm['txpower'].",".$latency."),";
-    $geolocinsertquery .= "('gtg',".$nm['nmid'].",".time().",61472,".$lat.",".$long.",'".$addr."',".$speedhead[1].",".$speedhead[0]."),";
+    if($n>0) { $geolocinsertquery .= "('gtg',".$nm['nmid'].",".time().",61472,".$lat.",".$long.",'".$addr."',".$speedhead[1].",".$speedhead[0]."),"; };
     $statusinsertquery .= "('gtg',".$nm['nmid'].",".time().",".$stati[$nm['nmstate']].",'".$reason."'),";
     };
   };
