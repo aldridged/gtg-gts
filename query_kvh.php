@@ -112,7 +112,7 @@ if (!mysql_select_db('gts')) {
 
 // Parse returned XML
 $index=0;
-foreach($xml->Folder->Placemark as $data) {
+foreach($xml->Document->Placemark as $data) {
   $cleancoords=explode(",",$data->Point->coordinates);
   $cleanname=explode(" ",$data->name);
   $cleandesc=explode("\n",$data->description);
