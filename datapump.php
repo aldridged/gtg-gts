@@ -110,7 +110,7 @@ foreach ($a as $idx=>$val) {
 }
 
 // Open link to NMS database
-$link = mysql_connect('10.110.254.11','noc','datacom');
+$link = mysql_connect('204.9.216.11','noc','datacom');
 if (!$link) {
   die("Cannot connect to NMS db");
 };
