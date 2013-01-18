@@ -116,7 +116,7 @@ foreach($xml->Document->Placemark as $data) {
   $cleancoords=explode(",",$data->Point->coordinates);
   $cleanname=explode(" ",$data->name);
   $cleandesc=explode("\n",$data->description);
-  $statuskey=strinarray('<p style',$cleandesc);
+  $statuskey=strinarray('Status',$cleandesc);
   $cleanstatus=strip_tags($cleandesc[$statuskey]);
   $statuscode=explode(" ",$cleanstatus);
   $idkey=strinarray('ID',$cleandesc);
