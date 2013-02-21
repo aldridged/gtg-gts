@@ -1132,6 +1132,7 @@ function jsmCreatePushPin(rcdNdx, dsNdx, ppNdx, evRcd)
         }
     }
     if (IS_FLEET) html += "<tr class='infoBoxRow'><td class='infoBoxCell'><a href='Track?page=map.device&device="+evRcd.optDesc[0]+"'>GPS Tracking Details</a></td></tr>";
+    if (IS_FLEET) html += "<tr class='infoBoxRow'><td class='infoBoxCell'><a href='/mrtg/"+evRcd.optDesc[0]+".html' target='_blank'>Device Traffic Data</a></td></tr>";
     if (IS_FLEET) html += "<tr class='infoBowRow'><td class='infoBoxCell'><a href='mailto:noc@getdatacom.com?subject=Trouble-Ticket-"+(dev.split(' ').join('-')).split('#').join('')+"'>Raise Trouble Ticket</a></td></tr>";
     html += "</table>";
     html += "<script type='text/javascript'> jsmHighlightDetailRow("+rcdNdx+",true); </script>\n";
