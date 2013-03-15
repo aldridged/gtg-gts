@@ -1,6 +1,9 @@
 <?php
 // Query all exceede units
 
+// Load Mikrotik API Class
+require('/usr/local/gts/routeros_api.class.php');
+
 // Function to handle ping
 function ping($host, $timeout = 1) {
   $package = "\x08\x00\x7d\x4b\x00\x00\x00\x00PingHost";
@@ -48,6 +51,28 @@ function statusping($host) {
 
   return(array($status,$avgpingtime,$packetloss));
   };
+  
+// Function to query Mikrotiks for current public IP address
+function mtPublicIP($host) {
+
+  // Instanciate MT API call
+  $API = new routeros_api();
+  $API->debug = false;
+  
+  // Set a default value to return if connection to MT fails
+  $ipaddr = "0.0.0.0";
+
+  // Query Mikrotik
+  if ($API->connect($host, 'admin', 'DataCom')) {
+    $API->write('/ip/dhcp-client/print');
+    $ARRAY = $API->read();
+    $API->disconnect();
+
+    $ipaddr = substr($ARRAY['0']['address'],0,-3);
+    };
+    
+  return($ipaddr);
+};
 
 // Connect to GTS Database
 $link = mysql_connect('localhost','root','d@t@c0m#-db@s3');
@@ -77,9 +102,10 @@ $index++;
 // Loop though devices getting status information and building inserts
 while ($ar = mysql_fetch_array($res, MYSQL_BOTH)) {
   list($curstat,$latency,$pl) = statusping($ar['ipAddressCurrent']);
-  $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$ar['deviceID']."',timestamp=".time().",statusCode=".$curstat.",rawData='Latency:".$latency." Packet Loss:".$pl."%';";
+  $pubip = mtPublicIP($ar['ipAddressCurrent']);
+  $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$ar['deviceID']."',timestamp=".time().",statusCode=".$curstat.",rawData='Latency:".$latency." Packet Loss:".$pl."% Public IP:".$pubip."';";
   $index++;
-  $insertquery[$index] = "UPDATE Device SET lastInputState=".$curstat.",lastRtt=".$latency.",notes='Packet Loss:".$pl."%' WHERE deviceID='".$ar['deviceID']."';";
+  $insertquery[$index] = "UPDATE Device SET lastInputState=".$curstat.",lastRtt=".$latency.",notes='<br>Packet Loss: ".$pl."%<br>Current Public IP: ".$pubip."<br>' WHERE deviceID='".$ar['deviceID']."';";
   $index++;
 };
 
