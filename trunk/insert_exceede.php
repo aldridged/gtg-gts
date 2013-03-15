@@ -19,10 +19,12 @@ if (!mysql_select_db('gts')) {
 // Create queries to insert device
 $devicequery = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,ipAddressCurrent,isActive,lastUpdateTime) VALUES ('gtg','".$argv[1]."','exceede','netmodem','".$argv[2]."','".$argv[1]."','".$argv[2]."','".$argv[2]."','".$argv[3]."',1,".time().") ON DUPLICATE KEY UPDATE groupID=VALUES(groupID),lastUpdateTime=VALUES(lastUpdateTime),ipAddressCurrent=VALUES(ipAddressCurrent);";
 $eventquery = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$argv[1]."',timestamp=".time().",statusCode=61472,latitude=".$argv[4].",longitude=".$argv[5].";";
+$groupquery = "INSERT INTO DeviceList (accountID,groupID,deviceID) values ('gtg','exceede','".$argv[1]."');";
 
 // Perform inserts
 $res = mysql_query($devicequery);
 $res = mysql_query($eventquery);
+$res = mysql_query($groupquery);
 
 // Notify User
 echo("Device sucessfully inserted into database\n");
