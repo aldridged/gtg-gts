@@ -18,7 +18,7 @@ function ping($host, $timeout = 1) {
   return $result;
   };
 
-// Function to do 10 pings to given host and return status code
+// Function to do 10 pings to given host and return status code, latency and packetloss
 function statusping($host) {
   $pingtime = 0;
   $avgpingtime = 0;
@@ -43,8 +43,10 @@ function statusping($host) {
     $status = 40001;
   else
     $status = 40000;
+    
+  $packetloss *= 10; 
 
-  return($status);
+  return(array($status,$avgpingtime,$packetloss));
   };
 
 // Connect to GTS Database
@@ -72,11 +74,12 @@ $index=0;
 $insertquery[$index] = "UPDATE EventData SET timestamp=".time()." WHERE statusCode=61472 and deviceID like 'WB%';";
 $index++;
 
+// Loop though devices getting status information and building inserts
 while ($ar = mysql_fetch_array($res, MYSQL_BOTH)) {
-  $curstat = statusping($ar['ipAddressCurrent']);
-  $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$ar['deviceID']."',timestamp=".time().",statusCode=".$curstat.";";
+  list($curstat,$latency,$pl) = statusping($ar['ipAddressCurrent']);
+  $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$ar['deviceID']."',timestamp=".time().",statusCode=".$curstat.",rawData='Latency:".$latency." Packet Loss:".$pl."%';";
   $index++;
-  $insertquery[$index] = "UPDATE Device SET lastInputState=".$curstat." WHERE deviceID='".$ar['deviceID']."';";
+  $insertquery[$index] = "UPDATE Device SET lastInputState=".$curstat.",lastRtt=".$latency.",notes='Packet Loss:".$pl."%' WHERE deviceID='".$ar['deviceID']."';";
   $index++;
 };
 
