@@ -595,11 +595,9 @@
          <Column name="statusDesc"                  />
          <Column name="geoPoint"            arg="5" ifTrue="columnLatLon"/>
          <Column name="speedH"              arg="1" />
-         <Column name="altitude"                    />
-         <Column name="odometer"            arg="0" ifTrue="columnOdometer"/>
-         <Column name="fuelTotal"                   ifTrue="columnFuelUsage"/>
          <Column name="address"                     />
          <Column name="geozoneDesc"                 ifTrue="columnGeozoneDesc"/>
+	 <Column name="rawData"			    />
       </Columns>
       <Constraints>
          <SelectionLimit type="first">2000</SelectionLimit>
