@@ -150,7 +150,7 @@ public class DeviceRecord<RT extends DBRecord>
         } else
         if (!this.getAccountID().equals(dev.getAccountID()) ||
             !this.getDeviceID().equals(dev.getDeviceID()  )   ) {
-            Print.logError("Account/Device IDs do not match: " + this.getAccountID() + "/" + this.getDeviceID());
+            Print.logError("Account/Device IDs do not match: " + this.getAccountID() + ":" + dev.getAccountID() + "/" + this.getDeviceID() + ":" + dev.getDeviceID());
             this.device = null;
         } else {
             this.setAccount(dev.getAccount());
