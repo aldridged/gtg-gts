@@ -792,7 +792,7 @@ public class DBFieldValues
             DateTime dt = (DateTime)obj;
             return dt.format("yyyy-MM-dd HH:mm:ss", DateTime.getGMTTimeZone());
         } else {
-            Print.logWarn("Converting object to string: " + StringTools.className(obj));
+            /* Print.logWarn("Converting object to string: " + StringTools.className(obj)); */
             return obj.toString();
         }
 
