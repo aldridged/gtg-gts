@@ -774,6 +774,11 @@ public class DBFieldValues
             obj = ((DBFieldType)obj).getObject();
         }
 
+	/* Second check for null after dbfield retrieval */
+        if (obj == null) {
+            return "";
+        }
+
         /* convert to String */
         if (obj instanceof String) {
             return ((String)obj).trim();
