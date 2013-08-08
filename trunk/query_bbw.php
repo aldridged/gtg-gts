@@ -4,6 +4,18 @@
 // Load Mikrotik API Class
 require('/usr/local/gts/routeros_api.class.php');
 
+// Function to get availability over period samples
+function Avail($devid,$period) {
+  $res = mysql_query("select ROUND(AVG(100-(substring(rawData,locate(':',rawData,10)+1,(locate('%',rawData)-locate(':',rawData,10)-1)))),2) as AV from EventData where accountID='gtg' and deviceID='".$devid."' and rawData is not null order by timestamp DESC limit ".$period.";");
+
+  if (!$res) {
+    die("Error cannot get availability information");
+  };
+
+  $ar = mysql_fetch_array($res, MYSQL_BOTH);
+  return($ar['AV']);
+  };
+
 // Function to handle ping
 function ping($host, $timeout = 1) {
   $package = "\x08\x00\x7d\x4b\x00\x00\x00\x00PingHost";
@@ -116,9 +128,11 @@ $index++;
 while ($ar = mysql_fetch_array($res, MYSQL_BOTH)) {
   list($curstat,$latency,$pl) = statusping($ar['ipAddressCurrent']);
   $pubip = mtPublicIP($ar['ipAddressCurrent']);
+  $avail24h = Avail($ar['deviceID'],144);
+  $avail30d = Avail($ar['deviceID'],4320);
   $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$ar['deviceID']."',timestamp=".time().",statusCode=".$curstat.",rawData='Latency:".$latency." Packet Loss:".$pl."% Public IP:".$pubip."';";
   $index++;
-  $insertquery[$index] = "UPDATE Device SET lastInputState=".$curstat.",lastRtt=".$latency.",notes='<br>Packet Loss: ".$pl."%<br>Current Public IP: ".$pubip."<br>' WHERE deviceID='".$ar['deviceID']."';";
+  $insertquery[$index] = "UPDATE Device SET lastInputState=".$curstat.",lastRtt=".$latency.",notes='<br>24 Hour Availability: ".$avail24h."%<br>30 Day Availability: ".$avail30d."%<br>Packet Loss: ".$pl."%<br>Current Public IP: ".$pubip."<br>' WHERE deviceID='".$ar['deviceID']."';";
   $index++;
 };
 
