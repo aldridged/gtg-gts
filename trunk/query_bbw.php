@@ -129,10 +129,11 @@ while ($ar = mysql_fetch_array($res, MYSQL_BOTH)) {
   list($curstat,$latency,$pl) = statusping($ar['ipAddressCurrent']);
   $pubip = mtPublicIP($ar['ipAddressCurrent']);
   $avail24h = Avail($ar['deviceID'],144);
+  $avail7d = Avail($ar['deviceID'],1008);
   $avail30d = Avail($ar['deviceID'],4320);
   $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$ar['deviceID']."',timestamp=".time().",statusCode=".$curstat.",rawData='Latency:".$latency." Packet Loss:".$pl."% Public IP:".$pubip."';";
   $index++;
-  $insertquery[$index] = "UPDATE Device SET lastInputState=".$curstat.",lastRtt=".$latency.",notes='<br>24 Hour Availability: ".$avail24h."%<br>30 Day Availability: ".$avail30d."%<br>Packet Loss: ".$pl."%<br>Current Public IP: ".$pubip."<br>' WHERE deviceID='".$ar['deviceID']."';";
+  $insertquery[$index] = "UPDATE Device SET lastInputState=".$curstat.",lastRtt=".$latency.",notes='<br>24 Hour Availability: ".$avail24h."%<br>7 Day Availability: ".$avail7d."%<br>30 Day Availability: ".$avail30d."%<br>Packet Loss: ".$pl."%<br>Current Public IP: ".$pubip."<br>' WHERE deviceID='".$ar['deviceID']."';";
   $index++;
 };
 
