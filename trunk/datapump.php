@@ -92,7 +92,7 @@ function handleGeozone($link,$devid,$lat,$long) {
 snmp_read_mib("/usr/share/snmp/mibs/IDIRECT-REMOTE-MIB.txt");
 
 // SNMP Query NMS Server
-$a = snmp2_real_walk("204.9.216.50", "dcsatnetwork", 
+$a = snmp2_real_walk("204.9.216.250", "dcsatnetwork", 
 "1.3.6.1.4.1.13732");
 
 // Convert returned data to usable array
@@ -110,7 +110,7 @@ foreach ($a as $idx=>$val) {
 }
 
 // Open link to NMS database
-$link = mysql_connect('204.9.216.11','noc','datacom');
+$link = mysql_connect('204.9.216.250','noc','datacom');
 if (!$link) {
   die("Cannot connect to NMS db");
 };
