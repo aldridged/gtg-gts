@@ -263,7 +263,7 @@ Notes:
     <Copyright>Copyright (C) 2011 Datacom, Inc.</Copyright>
 
     <!-- Title used in html head 'title' tag -->
-    <PageTitle i18n="PrivateXML.pageTitle">Global Tracking System</PageTitle>
+    <PageTitle i18n="PrivateXML.pageTitle">Datacom Customer Portal</PageTitle>
 
     <!-- Date/Time format (Note: These date/time format values are CASE SENSITIVE!!)
      === yyyy - year
@@ -728,7 +728,7 @@ Notes:
      === Microsoft Online Privacy Statement:
      ===   http://privacy.microsoft.com/
      -->
-    <MapProvider name="virtualEarth" active="${MapProvider.active=false}"
+    <MapProvider name="virtualEarth" active="${MapProvider.active=true}"
         class="org.opengts.war.maps.jsmap.VirtualEarth"
         rtPropPrefix="Domain.MapProvider.">
         <Property key="map.fillFrame">false</Property>                  <!-- expand map to fill page frame -->
@@ -820,7 +820,7 @@ Notes:
      === to make sure you comply with all of the Google terms of use for this service.
      ===   http://code.google.com/apis/maps/terms.html
      -->
-    <MapProvider name="googleMaps" active="${MapProvider.active=true}"
+    <MapProvider name="googleMaps" active="${MapProvider.active=false}"
         class="org.opengts.war.maps.jsmap.GoogleMaps"
         key="AIzaSyB6kMPPFihhew-znve0snfKDUMJNSQxjRg"
         rtPropPrefix="Domain.MapProvider.">
