@@ -90,6 +90,9 @@ return $i;
 // Connect and retrieve KML data
 $ch = curl_init('http://208.83.165.114/KMLs/BDA44F00-6C56-4337-819D-DF4E8D6DE462/p45.kml');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT , 120);
+curl_setopt($ch, CURLOPT_TIMEOUT, 120);
 curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/534.10(KHTML, like Gecko) Chrome/8.0.552.237 Safari/534.10');
 curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 curl_setopt($ch, CURLOPT_USERPWD, 'datacom:#ebbflow!');
@@ -114,30 +117,34 @@ if (!mysql_select_db('gts')) {
 $index=0;
 foreach($xml->Document->Placemark as $data) {
   $cleancoords=explode(",",$data->Point->coordinates);
-  $cleanname=explode(" ",$data->name);
+  $cleanname=explode(":",$data->name);
   $cleandesc=explode("\n",$data->description);
   $statuskey=strinarray('Status',$cleandesc);
+  $hubkey=strinarray('Hub',$cleandesc);
   $cleanstatus=strip_tags($cleandesc[$statuskey]);
   $statuscode=explode(" ",$cleanstatus);
   $idkey=strinarray('ID',$cleandesc);
   $speedkey=strinarray('Current speed',$cleandesc);
   $notekey1=strinarray('Modem has been', $cleandesc);
-  $notekey2=strinarray('Eb',$cleandesc);
+  $notekey2=strinarray('Es',$cleandesc);
+  $notekey3=strinarray('Total',$cleandesc);
+  $notekey4=strinarray('Inbound',$cleandesc);
+  $notekey5=strinarray('Ou',$cleandesc);
   $cleanid=explode(" ",$cleandesc[$idkey]);
   $cleanspeed=explode(" ",$cleandesc[$speedkey]);
-  $kvhdata[$index]['name']=$cleanname[2];
+  $kvhdata[$index]['name']=trim($cleanname[1]);
   $kvhdata[$index]['latitude']=$cleancoords[1];
   $kvhdata[$index]['longitude']=$cleancoords[0];
   $kvhdata[$index]['speed']=$cleanspeed[3]*1.852;
-  $kvhdata[$index]['ipaddr']=$cleanname[0];
-  $kvhdata[$index]['id']=strip_tags($cleanid[2]);
+  $kvhdata[$index]['ipaddr']=substr($cleanname[0],0,-7);
+  $kvhdata[$index]['id']=substr($cleanid[2],0,-3);
   $kvhdata[$index]['status']=$cleanstatus;
   if($statuscode[4]=='In') { 
     $kvhdata[$index]['statuscode']="40000";
   } else $kvhdata[$index]['statuscode']="40002";
-  $kvhdata[$index]['notes']=strip_tags($cleandesc[$speedkey])."<br />".strip_tags($cleandesc[$notekey1])."<br />".strip_tags($cleandesc[$notekey2]);
-  $kvhdata[$index]['address']=handleGeozone($link,strip_tags($cleanid[2]),$cleancoords[1],$cleancoords[0]);
-  $kvhdata[$index]['heading']=handleHeading($link,strip_tags($cleanid[2]),$cleancoords[1],$cleancoords[0]);
+  $kvhdata[$index]['notes']=strip_tags($cleandesc[$hubkey])."<br />".strip_tags($cleandesc[$speedkey])."<br />".strip_tags($cleandesc[$notekey1])."<br />".strip_tags($cleandesc[$notekey2])."<br />".strip_tags($cleandesc[$notekey3])."<br />".strip_tags($cleandesc[$notekey4])."<br />".strip_tags($cleandesc[$notekey5]);
+  $kvhdata[$index]['address']=handleGeozone($link,substr($cleanid[2],0,-3),$cleancoords[1],$cleancoords[0]);
+  $kvhdata[$index]['heading']=handleHeading($link,substr($cleanid[2],0,-3),$cleancoords[1],$cleancoords[0]);
   $index++;
 };
 
