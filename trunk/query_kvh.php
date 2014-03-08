@@ -150,6 +150,7 @@ foreach($xml->Document->Placemark as $data) {
 
 //Build Device and Location Insert Query
 $index=0;
+$devices_in_feed="";
 foreach($kvhdata as $data) {
   $insertquery[$index] = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,ipAddressCurrent,isActive,lastUpdateTime,lastInputState,notes) VALUES ('gtg','".$data['id']."','kvh','netmodem','".$data['name']."','".$data['id']."','".$data['name']."','".$data['name']."','".$data['ipaddr']."',1,".time().",".$data['statuscode'].",'".$data['status']."<br />".$data['notes']."') ON DUPLICATE KEY UPDATE groupID=VALUES(groupID),lastUpdateTime=VALUES(lastUpdateTime),ipAddressCurrent=VALUES(ipAddressCurrent),lastInputState=VALUES(lastInputState),notes=VALUES(notes);";
   //$insertquery[$index] = "REPLACE INTO Device SET accountID='gtg',deviceID='".$data['id']."',groupID='kvh',equipmentType='netmodem',vehicleID='".$data['name']."',uniqueID='".$data['id']."',displayName='".$data['name']."',description='".$data['name']."',ipAddressCurrent='".$data['ipaddr']."',isActive=1,lastUpdateTime=".time().",lastInputState=".$data['statuscode'].",notes='".$data['status']."<br />".$data['notes']."';";
@@ -158,7 +159,10 @@ foreach($kvhdata as $data) {
   $index++;
   $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$data['id']."',timestamp=".time().",statusCode=".$data['statuscode'].",rawData='".$data['status']."';";
   $index++;
+  $devices_in_feed .= "'".$data['id']."',";
 };
+//Drop trailing comma on dev list
+$devices_in_feed = substr($devices_in_feed,0,-1);
 
 //Perform Device and location Inserts
 foreach($insertquery as $querytext)
@@ -166,6 +170,10 @@ foreach($insertquery as $querytext)
   //echo $querytext."\n";
   $res = mysql_query($querytext);
   };
+  
+//Perform updates on devices in database but not in the data feed
+$querytext = "UPDATE Device SET lastInputState=40002,notes='NO LONGER IN DATAFEED' WHERE groupID='kvh' AND deviceID NOT IN (".$devices_in_feed.");";
+$res = mysql_query($querytext);
 
 //Free GTS database connection
 mysql_close($link);
