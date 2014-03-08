@@ -118,7 +118,7 @@ $index=0;
 foreach($xml->Document->Placemark as $data) {
   $cleancoords=explode(",",$data->Point->coordinates);
   $cleanname=explode(":",$data->name);
-  $cleandesc=explode("\n",$data->description);
+  $cleandesc=explode("\n",str_replace("'","",$data->description));
   $statuskey=strinarray('Status',$cleandesc);
   $hubkey=strinarray('Hub',$cleandesc);
   $cleanstatus=strip_tags($cleandesc[$statuskey]);
@@ -152,6 +152,7 @@ foreach($xml->Document->Placemark as $data) {
 $index=0;
 foreach($kvhdata as $data) {
   $insertquery[$index] = "INSERT INTO Device (accountID,deviceID,groupID,equipmentType,vehicleID,uniqueID,displayName,description,ipAddressCurrent,isActive,lastUpdateTime,lastInputState,notes) VALUES ('gtg','".$data['id']."','kvh','netmodem','".$data['name']."','".$data['id']."','".$data['name']."','".$data['name']."','".$data['ipaddr']."',1,".time().",".$data['statuscode'].",'".$data['status']."<br />".$data['notes']."') ON DUPLICATE KEY UPDATE groupID=VALUES(groupID),lastUpdateTime=VALUES(lastUpdateTime),ipAddressCurrent=VALUES(ipAddressCurrent),lastInputState=VALUES(lastInputState),notes=VALUES(notes);";
+  //$insertquery[$index] = "REPLACE INTO Device SET accountID='gtg',deviceID='".$data['id']."',groupID='kvh',equipmentType='netmodem',vehicleID='".$data['name']."',uniqueID='".$data['id']."',displayName='".$data['name']."',description='".$data['name']."',ipAddressCurrent='".$data['ipaddr']."',isActive=1,lastUpdateTime=".time().",lastInputState=".$data['statuscode'].",notes='".$data['status']."<br />".$data['notes']."';";
   $index++;
   $insertquery[$index] = "REPLACE INTO EventData SET accountID='gtg',deviceID='".$data['id']."',timestamp=".time().",statusCode=61472,latitude=".$data['latitude'].",longitude=".$data['longitude'].",speedKPH=".$data['speed'].",address='".$data['address']."',heading=".$data['heading'].";";
   $index++;
@@ -162,6 +163,7 @@ foreach($kvhdata as $data) {
 //Perform Device and location Inserts
 foreach($insertquery as $querytext)
   {
+  //echo $querytext."\n";
   $res = mysql_query($querytext);
   };
 
