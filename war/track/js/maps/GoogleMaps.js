@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------------
-// Copyright 2007-2012, GeoTelematic Solutions, Inc.
+// Copyright 2006-2010, GeoTelematic Solutions, Inc.
 // All rights reserved
 // ----------------------------------------------------------------------------
 //
@@ -45,17 +45,16 @@
 //     -Added route-arrows (see ROUTE_LINE_ARROWS)
 //  2010/11/29  Martin D. Flynn
 //     -Removed pushpins from non-editable polygon geozones
-//  2011/01/28  Martin D. Flynn
-//     -Apply minimum zoom (point range) when updating a single point on the map.
-//     -Added support for setting map type from "map.view" property.
-//  2014/03/12  D Aldridge
-//     -Rewritten for google maps v3 api
 // ----------------------------------------------------------------------------
 
 var DRAG_NONE               = 0;
 var DRAG_RULER              = 1;
 var DRAG_GEOZONE_CENTER     = 2;
 var DRAG_GEOZONE_RADIUS     = 3;
+
+var USE_DEFAULT_CONTROLS    = true;
+
+// ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
@@ -92,154 +91,40 @@ google.maps.Marker.prototype.closePushpinPopup = function()
     }
 };
 
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// google.maps.Map
-
-/* init pushpin vars */
-google.maps.Map.prototype.initGTS = function()
+/**
+*** Create GMap(...)
+**/
+function jsNewGMap(element)
 {
-
-    /* pushpin markers */
-    this.pushpinMarkers = [];
-    this.routeMarkers   = [];
-    this.activePopup    = null;
-
-    /* MapTypeId */
-    try {
-        if ((DEFAULT_VIEW == "aerial") || (DEFAULT_VIEW == "satellite")) {
-            this.setMapTypeId(google.maps.MapTypeId.SATELLITE);
-        } else
-        if (DEFAULT_VIEW == "hybrid") {
-            this.setMapTypeId(google.maps.MapTypeId.HYBRID); 
-        } else
-        if (DEFAULT_VIEW == "terrain") {
-            this.setMapTypeId(google.maps.MapTypeId.TERRAIN); 
-        } else {
-            this.setMapTypeId(google.maps.MapTypeId.ROADMAP); // "normal", "road"
-        }
-    } catch (e) {
-        // ignore (this catch may not be necessary here)
-    }
-
-    /* key up/down listeners */
-    var self = this;
-    this.rulerDragEnabled = false;
-    this.keyDownListener = google.maps.event.addDomListener(document, 'keydown', function(event) {
-        event = event || window.event;
-        self.rulerDragEnabled = event.ctrlKey? true : false;
-        if (!self.rulerDragEnabled) {
-            switch (event.keyCode) {
-                case 16: // shiftKey
-                    break;
-                case 17: // ctrlKey
-                    self.rulerDragEnabled = true;
-                    break;
-                case 18: // altKey
-                    break;
-            }
-        }
-    });
-    this.keyUpListener = google.maps.event.addDomListener(document, 'keyup', function(event) {
-        event = event || window.event;
-        self.rulerDragEnabled = false;
-    });
-
-};
-
-// ----
-
-/* display the specified pushpin popup */
-google.maps.Map.prototype.showPushpinPopup = function(pp/*JSMapPushpin*/)
-{
-    this.hidePushpinPopups();
-    if (pp && pp.marker) {
-        pp.marker.openPushpinPopup();
-        this.activePopup = pp;
-        jsmHighlightDetailRow(pp.rcdNdx, true);
+    if (GOOGLE_API_V2) {
+        var mapStyle = { 
+            draggableCursor: "auto", 
+            draggingCursor: "move" 
+        };
+       // return new GMap2(element, mapStyle);
+	   // Upgrade to V3 API
+	   return new google.maps.Map(element, mapStyle);
+    } else {
+        var mapStyle = { 
+            draggableCursor: "auto", 
+            draggingCursor: "move" 
+        };
+        return new google.map.Map(element, mapStyle);
     }
 };
-
-/* hide all visible popups */
-google.maps.Map.prototype.hidePushpinPopups = function()
-{
-    for (var i = 0; i < this.pushpinMarkers.length; i++) {
-        this.pushpinMarkers[i].marker.closePushpinPopup();
-    }
-    if (this.activePopup) {
-        jsmHighlightDetailRow(this.activePopup.rcdNdx, false);
-        this.activePopup = null;
-    }
-};
-
-/* add pushpin to map */
-google.maps.Map.prototype.addPushpinMarker = function(pp/*JSMapPushpin*/)
-{
-
-    /* accuracy radius */
-    if (pp.accRadius) {
-        pp.accRadius.setMap(this);
-    }
-
-    /* pushpins */
-    if (pp.bgMarker) {
-        pp.bgMarker.setMap(this);
-    }
-    pp.marker.setMap(this);
-
-    /* save */
-    this.pushpinMarkers.push(pp);
-
-    /* info-balloon 'click' listener */
-    var self = this;
-    google.maps.event.addListener(pp.marker, 'click', function(event) { 
-        self.showPushpinPopup(pp);
-    });
-    
-};
-
-/* remove all pushpins from map */
-google.maps.Map.prototype.removePushpinMarkers = function()
-{
-    for (var i = 0; i < this.pushpinMarkers.length; i++) {
-        var pp = this.pushpinMarkers[i]; // JSMapPushpin
-        if (pp.accRadius) {
-            pp.accRadius.setMap(null);
-        }
-        if (pp.bgMarker) {
-            pp.bgMarker.setMap(null);
-        }
-        pp.marker.setMap(null);
-    }
-    this.pushpinMarkers = [];
-}
-
-// ----
-
-/* add route marker */
-google.maps.Map.prototype.addRouteMarker = function(marker)
-{
-    this.routeMarkers.push(marker);
-};
-
-/* remove route markers */
-google.maps.Map.prototype.removeRouteMarkers = function()
-{
-    for (var i = 0; i < this.routeMarkers.length; i++) {
-        this.routeMarkers[i].setMap(null);
-    }
-    this.routeMarkers = [];
-}
-
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
 
 /**
 *** Create GLatLng(...)
 **/
 function jsNewGLatLng(lat, lon)
 {
-    return new google.maps.LatLng(lat, lon);
+    if (GOOGLE_API_V2) {
+        // return new GLatLng(lat, lon);
+		// Upgrade to V3 API
+		return new google.maps.LatLng(lat, lon);
+    } else {
+        return google.maps.LatLng(lat, lon);
+    }
 };
 
 /**
@@ -247,7 +132,13 @@ function jsNewGLatLng(lat, lon)
 **/
 function jsNewGLatLngBounds()
 {
-    return new google.maps.LatLngBounds();
+    if (GOOGLE_API_V2) {
+        // return new GLatLngBounds();
+		// Upgrade to V3 API
+		return new google.maps.LatLngBounds();
+    } else {
+        return google.maps.LatLngBounds();
+    }
 };
 
 /**
@@ -255,7 +146,13 @@ function jsNewGLatLngBounds()
 **/
 function jsNewGSize(W, H) 
 {
-    return new google.maps.Size(W, H);
+    if (GOOGLE_API_V2) {
+        // return new GSize(W, H);
+		// Upgrade to V3 API
+		return new google.maps.Size(W, H);
+    } else {
+        return google.maps.Size(W, H);
+    }
 };
 
 /**
@@ -263,7 +160,13 @@ function jsNewGSize(W, H)
 **/
 function jsNewGPoint(X, Y) 
 {
-    return new google.maps.Point(X, Y);
+    if (GOOGLE_API_V2) {
+	    // return new GPoint(X, Y);
+		// Upgrade to V3 API
+		return new google.maps.Point(X, Y);
+    } else {
+        return google.maps.Point(X, Y);
+    }
 };
 
 /**
@@ -272,95 +175,99 @@ function jsNewGPoint(X, Y)
 function jsNewGPolyline(latLonList, 
     borderColor, borderWidth, borderOpacity)
 {
-    return new google.maps.Polyline({
-        path:          latLonList,
-        strokeColor:   borderColor,
-        strokeWeight:  borderWidth,
-        strokeOpacity: borderOpacity
-    });
+    if (GOOGLE_API_V2) {
+       // return new GPolyline(latLonList, borderColor, borderWidth, borderOpacity);
+	   // Upgrade to V3 API
+	   return new google.maps.Polyline({ path: latLonList, strokeColor: borderColor, strokeWeight: borderWeight, strokeOpacity: borderOpacity});
+    } else {
+        return google.maps.Polyline({
+          //map:           this.googleMap,
+            path:          latLonList,
+            strokeColor:   borderColor,
+            strokeWeight:  borderWidth,
+            strokeOpacity: borderOpacity
+        });
+    }
 };
 
 /**
 *** Create GPolygon()
 **/
-function jsNewGPolygon(latLonList/*GLatLng[]*/, 
+function jsNewGPolygon(latLonList, 
     borderColor, borderWidth, borderOpacity, 
     fillColor, fillOpacity)
 {
-    return new google.maps.Polygon({
-        paths:         latLonList,
-        strokeColor:   borderColor,
-        strokeWeight:  borderWidth,
-        strokeOpacity: borderOpacity,
-        fillColor:     fillColor,
-        fillOpacity:   fillOpacity
-    });
-};
-
-/**
-*** Create GCircle()
-**/
-function jsNewGCircle(
-    latLonCenter/*GLatLng*/, radiusM,
-    borderColor, borderWidth, borderOpacity, 
-    fillColor, fillOpacity)
-{
-    try {
-        var cp = {
-            center:        latLonCenter,
-            radius:        radiusM,
+    if (GOOGLE_API_V2) {
+        // return new GPolygon(latLonList, borderColor, borderWidth, borderOpacity, fillColor, fillOpacity);
+		// Upgrade to V3 API
+		return new google.maps.Polygon({ paths: latLonList, strokeColor: borderColor, strokeWeight: borderWeight, strokeOpacity: borderOpacity, fillColor: fillColor, fillOpacity: fillOpacity});
+    } else {
+        return google.maps.Polygon({
+          //map:           this.googleMap,
+            paths:         latLonList,
             strokeColor:   borderColor,
             strokeWeight:  borderWidth,
             strokeOpacity: borderOpacity,
             fillColor:     fillColor,
-            fillOpacity:   fillOpacity,
-            clickable:     true
-        };
-        //alert("jsNewGCircle: center="+cp.center+", radius="+cp.radius+", strokeColor="+cp.strokeColor);
-        return new google.maps.Circle(cp);
-    } catch (e) {
-        alert("Error creating circle: " + e);
-        return null;
+            fillOpacity:   fillOpacity
+        });
     }
 };
 
 /**
 *** Create Pushpin Marker()
 **/
-function jsNewImageMarker(
-    point/*GLatLng*/, 
-    image, iconSize, iconAnchor, 
-    shadow, shadowSize, 
-    infoWindowAnchor,
+function jsNewImageMarker(point, 
+    image, iconSize, iconAnchor, shadow, shadowSize, infoWindowAnchor,
     draggable) 
 {
-    var iconImage = new google.maps.MarkerImage(
-        image,                          // imageURL
-        iconSize,                       // iconSize
-        new google.maps.Point(0,0),     // iconOrigin
-        iconAnchor);                    // iconAnchor
-    var marker = new google.maps.Marker({
-        clickable: true,
-        dragable: draggable,
-        raiseOnDrag: false,
-        flat: false,
-        optimized: false,
-        position: point,
-        icon: iconImage,
-      //shadow: shadowImage,
-      //shape: shape,
-        title: "" //,
-      //zIndex: beach[3]
-        });
-    if (shadow && shadowSize) {
+    if (GOOGLE_API_V2) {
+        //var icon = new GIcon();
+        //if (image )           { icon.image            = image;            }
+        //if (iconSize)         { icon.iconSize         = iconSize;         }
+        //if (iconAnchor)       { icon.iconAnchor       = iconAnchor;       }
+        //if (shadow)           { icon.shadow           = shadow;           }
+        //if (shadowSize)       { icon.shadowSize       = shadowSize;       }
+        //if (infoWindowAnchor) { icon.infoWindowAnchor = infoWindowAnchor; }
+        //var marker = new GMarker(point, { 
+        //    icon: icon, 
+        //    draggable: draggable 
+         //   });
+        // return marker;
+		// Upgrade to V3 API
+		//var iconimage = new google.maps.Icon();
+		//if (image) { iconimage.url=image; };
+		//if (iconSize) { iconimage.size=iconSize; };
+		//if (iconAnchor) { iconimage.anchor=iconAnchor; };
+		//var shadowimage = new google.maps.Icon();
+		//if (shadow) { shadowimage.url=shadow; };
+		//if (shadowSize) { shadowimage.size=shadowSize; };
+		//var marker = new google.maps.Marker({ position: point, icon: iconimage, shadow: shadowimage, title:"", draggable: draggable, optimized: false });
+		var marker = new google.maps.Marker({ position: point, icon: image, title:"", draggable: draggable, optimized: false });
+		return marker;
+    } else {
+        var iconImage = new google.maps.MarkerImage(
+            image,                          // image
+            iconSize,                       // iconSize
+            new google.maps.Point(0,0),     // iconOrigin
+            iconAnchor);                    // iconAnchor
         var shadowImage = new google.maps.MarkerImage(
-            shadow,                         // shadowURL
+            shadow,                         // shadow
             shadowSize,                     // shadowSize
             new google.maps.Point(0,0),     // shadowOrigin
             iconAnchor);                    // shadowAnchor
-        marker.setShadow(shadowImage);
+        var marker = new google.maps.Marker({
+            position: point,
+          //map: map,
+            icon: iconImage,
+            shadow: shadowImage,
+          //shape: shape,
+            title: "" //,
+          //zIndex: beach[3]
+            });
+        return marker;
+
     }
-    return marker;
 };
 
 // ----------------------------------------------------------------------------
@@ -373,24 +280,38 @@ function JSMap(element)
     //if (navigator.platform.match(/linux|bsd/i)) { _mSvgEnabled = _mSvgForced = true; }
 
     /* map */
-    this.gmapGoogleMap = new google.maps.Map(element, { 
-        //zoom: 8,
-        //center: jsNewGLatLng(<lat>, <lon>),
-        //mapTypeId: google.maps.MapTypeId.ROADMAP,  // SATELLITE, HYBRID, TERRAIN
-        draggable: true,
-        draggableCursor: "auto", 
-        draggingCursor: "move" ,
-        disableDoubleClickZoom: true,
-        overviewMapControl: true
-    });
-    this.gmapGoogleMap.initGTS();
+    this.gmapGoogleMap = jsNewGMap(element);
+    if (USE_DEFAULT_CONTROLS) {
+        //this.gmapGoogleMap.setUIToDefault();
+		// Upgrade to V3 API
+		this.gmapGoogleMap.setOptions( { disableDefaultUI: false } );
+        //var customUI = this.gmapGoogleMap.getDefaultUI();
+        ////customUI.controls.scalecontrol = false;
+        //this.gmapGoogleMap.setUI(customUI);
+    } else {
+        //this.gmapGoogleMap.addMapType(G_PHYSICAL_MAP);
+        //this.gmapGoogleMap.addMapType(G_SATELLITE_3D_MAP); // provided by "Harold Julian M"
+        //var hierarchy = new GHierarchicalMapTypeControl();
+        //hierarchy.addRelationship(G_SATELLITE_MAP, G_HYBRID_MAP, "Labels", true);
+        //this.gmapGoogleMap.addControl(hierarchy);
+		// Upgrade to V3 API
+        //this.gmapGoogleMap.addControl(new GMapTypeControl(1));
+        //this.gmapGoogleMap.addControl(new GSmallMapControl());
+    }
 
-    /* general variable definition */
-    this.jsmapBounds = null;
+    /* scroll wheel zoom */
+    //this.gmapGoogleMap.disableDoubleClickZoom();
+	this.gmapGoogleMap.setOptions( { disableDoubleClickZoom: true } );
+    if (SCROLL_WHEEL_ZOOM) { 
+        //this.gmapGoogleMap.enableScrollWheelZoom();
+		this.gmapGoogleMap.setOptions( { scrollwheel: true } );
+    }
+
+    element.style.cursor = "crosshair"; // may not be effective
     var self = this;
     
-    /* set crosshair cursor */
-    element.style.cursor = "crosshair"; // may not be effective
+    /* misc vars */
+    this.visiblePopupInfoBox = null;
 
     /* replay vars */
     this.replayTimer = null;
@@ -400,7 +321,7 @@ function JSMap(element)
     this.replayPushpins = [];
 
     /* zone vars */
-    this.geozoneIndex  = -1;
+    this.geozoneCenter = null;  // JSMapPoint
 
     /* drawn shapes */
     this.drawShapes = [];
@@ -408,91 +329,105 @@ function JSMap(element)
     /* 'mousemove' to update latitude/longitude */
     var locDisp = document.getElementById(ID_LAT_LON_DISPLAY);
     if (locDisp != null) {
-        google.maps.event.addListener(this.gmapGoogleMap, "mousemove", function(event) {
-            if (event && event.latLng) {
-                var point = event.latLng;
-                jsmSetLatLonDisplay(point.lat(), point.lng());
-                element.style.cursor = "crosshair";
-            }
+        //GEvent.addListener(this.gmapGoogleMap, "mousemove", function (point) {
+		google.maps.event.addListener(this.gmapGoogleMap, "mousemove", function (point) {
+            jsmSetLatLonDisplay(point.latLng.lat(),point.latLng.lng());
+            jsmapElem.style.cursor = "crosshair";
         });
         jsmSetLatLonDisplay(0,0);
     }
-
+    
     /* "click" */
-    google.maps.event.addListener(this.gmapGoogleMap, "click", function(event) {
-        if (!event || !event.latLng) { return; }
-        var point = event.latLng;
-        var LL = new JSMapPoint(point.lat(), point.lng());
-        if (jsvGeozoneMode && jsvZoneEditable) {
-            // recenter geozone
-            if (jsvZoneType == ZONE_POINT_RADIUS) {
-                var radiusM = zoneMapGetRadius(false);
-                var foundZoneNdx = -1;
-                for (var x = 0; x < jsvZoneList.length; x++) {
-                    var pt = jsvZoneList[x];
-                    if (geoIsValid(pt.lat,pt.lon)) {
-                        if (geoDistanceMeters(pt.lat, pt.lon, LL.lat, LL.lon) <= radiusM) {
-                            foundZoneNdx = x;
-                            break;
-                        }
-                    }
-                }
-                if (foundZoneNdx >= 0) { // inside an existing zone
-                    // skip
-                } else {
-                    jsmSetPointZoneValue(LL.lat, LL.lon, radiusM);
-                    mapProviderParseZones(jsvZoneList);
-                }
-            } else
-            if (jsvZoneType == ZONE_POLYGON) {
-                var count = 0; // count number of valid points
-                for (var x = 0; x < jsvZoneList.length; x++) {
-                    var pt = jsvZoneList[x];
-                    if (geoIsValid(pt.lat,pt.lon)) { count++; }
-                }
-                if (count == 0) {
-                    var radiusM = 450;  // no valid points - create default polygon
-                    var crLat   = geoRadians(point.lat());  // radians
-                    var crLon   = geoRadians(point.lng());  // radians
-                    for (x = 0; x < jsvZoneList.length; x++) {
-                        var deg   = x * (360.0 / jsvZoneList.length);
-                        var radM  = radiusM / EARTH_RADIUS_METERS;
-                        if ((deg == 0.0) || ((deg > 170.0) && (deg<  190.0))) { radM *= 0.8; }
-                        var xrad  = geoRadians(deg); // radians
-                        var rrLat = Math.asin(Math.sin(crLat) * Math.cos(radM) + Math.cos(crLat) * Math.sin(radM) * Math.cos(xrad));
-                        var rrLon = crLon + Math.atan2(Math.sin(xrad) * Math.sin(radM) * Math.cos(crLat), Math.cos(radM)-Math.sin(crLat) * Math.sin(rrLat));
-                        _jsmSetPointZoneValue(x, geoDegrees(rrLat), geoDegrees(rrLon), 0);
+    //GEvent.addListener(this.gmapGoogleMap, "click", function (overlay, point) {
+	google.maps.event.addListener(this.gmapGoogleMap, "click", function (overlay, point) {
+        if (point) {
+            var LL = new JSMapPoint(point.latLng.lat(), point.latLng.lng());
+            if (jsvGeozoneMode && jsvZoneEditable) {
+                // recenter geozone
+                if (jsvZoneType == ZONE_POINT_RADIUS) {
+                    var CC = (this.geozoneCenter != null)? this.geozoneCenter : new JSMapPoint(0.0,0.0);
+                    if (jsvZoneRadiusMeters <= 0.0              ) { jsvZoneRadiusMeters = DEFAULT_ZONE_RADIUS; }
+                    if (jsvZoneRadiusMeters >  MAX_ZONE_RADIUS_M) { jsvZoneRadiusMeters = MAX_ZONE_RADIUS_M;   }
+                    if (jsvZoneRadiusMeters <  MIN_ZONE_RADIUS_M) { jsvZoneRadiusMeters = MIN_ZONE_RADIUS_M;   }
+                    if (geoDistanceMeters(CC.lat, CC.lon, LL.lat, LL.lon) > jsvZoneRadiusMeters) {
+                        jsmSetPointZoneValue(LL.lat, LL.lon, jsvZoneRadiusMeters);
+                        mapProviderParseZones(jsvZoneList);
                     }
                 } else
-                if (true) {
-                    // just move the selected location
-                    jsmSetPointZoneValue(LL.lat, LL.lon, 0);
-                } else {
-                    // move valid points to new location
-                    var bounds = jsNewGLatLngBounds();
-                    for (var x = 0; x < jsvZoneList.length; x++) {
-                        var pt = jsvZoneList[x];
-                        if (geoIsValid(pt.lat,pt.lon)) {
-                            bounds.extend(jsNewGLatLng(pt.lat, pt.lon));
+                if (jsvZoneType == ZONE_POLYGON) {
+                    // count number of valid points
+                    var count = 0;
+                    for (var z = 0; z < jsvZoneList.length; z++) {
+                        if ((jsvZoneList[z].lat != 0.0) || (jsvZoneList[z].lon != 0.0)) {
+                            count++;
                         }
                     }
-                    var center   = bounds.getCenter(); // GLatLng
-                    var deltaLat = point.lat() - center.lat();
-                    var deltaLon = point.lng() - center.lng();
-                    for (var x = 0; x < jsvZoneList.length; x++) {
-                        var pt = jsvZoneList[x];
-                        if (geoIsValid(pt.lat,pt.lon)) {
-                            _jsmSetPointZoneValue(x, (pt.lat + deltaLat), (pt.lon + deltaLon), 0);
+                    if (count == 0) {
+                        // no valid points - create default polygon
+                        var radiusM = 450;
+                        var crLat   = geoRadians(point.latLng.lat());  // radians
+                        var crLon   = geoRadians(point.latLng.lng());  // radians
+                        for (x = 0; x < jsvZoneList.length; x++) {
+                            var deg   = x * (360.0 / jsvZoneList.length);
+                            var radM  = radiusM / EARTH_RADIUS_METERS;
+                            if ((deg == 0.0) || ((deg > 170.0) && (deg<  190.0))) { radM *= 0.8; }
+                            var xrad  = geoRadians(deg); // radians
+                            var rrLat = Math.asin(Math.sin(crLat) * Math.cos(radM) + Math.cos(crLat) * Math.sin(radM) * Math.cos(xrad));
+                            var rrLon = crLon + Math.atan2(Math.sin(xrad) * Math.sin(radM) * Math.cos(crLat), Math.cos(radM)-Math.sin(crLat) * Math.sin(rrLat));
+                            _jsmSetPointZoneValue(x, geoDegrees(rrLat), geoDegrees(rrLon), 0);
                         }
+                    } else {
+                        // move valid points to new location
+                        var bounds = jsNewGLatLngBounds();
+                        for (var x = 0; x < jsvZoneList.length; x++) {
+                            var pt = jsvZoneList[x];
+                            if ((pt.lat != 0.0) || (pt.lon != 0.0)) {
+                                bounds.extend(jsNewGLatLng(pt.lat, pt.lon));
+                            }
+                        }
+                        var center   = bounds.getCenter(); // GLatLng
+                        var deltaLat = point.latLng.lat() - center.lat();
+                        var deltaLon = point.latLng.lng() - center.lng();
+                        for (var x = 0; x < jsvZoneList.length; x++) {
+                            var pt = jsvZoneList[x];
+                            if ((pt.lat != 0.0) || (pt.lon != 0.0)) {
+                                _jsmSetPointZoneValue(x, (pt.lat + deltaLat), (pt.lon + deltaLon), 0);
+                            }
+                        }
+                    }
+                    // parse points
+                    mapProviderParseZones(jsvZoneList);
+                    this.geozoneCenter = LL;
+                } else
+                if (jsvZoneType == ZONE_SWEPT_POINT_RADIUS) {
+                    var CC = (this.geozoneCenter != null)? this.geozoneCenter : new JSMapPoint(0.0,0.0);
+                    if (jsvZoneRadiusMeters <= 0.0              ) { jsvZoneRadiusMeters = DEFAULT_ZONE_RADIUS; }
+                    if (jsvZoneRadiusMeters >  MAX_ZONE_RADIUS_M) { jsvZoneRadiusMeters = MAX_ZONE_RADIUS_M;   }
+                    if (jsvZoneRadiusMeters <  MIN_ZONE_RADIUS_M) { jsvZoneRadiusMeters = MIN_ZONE_RADIUS_M;   }
+                    // count number of valid points
+                    var count = 0;
+                    var maxDistKM = 0.0;
+                    var lastPT = null;
+                    for (var z = 0; z < jsvZoneList.length; z++) {
+                        if ((jsvZoneList[z].lat != 0.0) || (jsvZoneList[z].lon != 0.0)) {
+                            count++;
+                            if (lastPT != null) {
+                                var dkm = geoDistanceMeters(lastPT.lat, lastPT.lon, jsvZoneList[z].lat, jsvZoneList[z].lon);
+                                if (dkm > maxDistKM) {
+                                    maxDistKM = dkm;
+                                }
+                            } else {
+                                lastPT = jsvZoneList[z]; // first valid point
+                            }
+                        }
+                    }
+                    //
+                    if (geoDistanceMeters(CC.lat, CC.lon, LL.lat, LL.lon) > jsvZoneRadiusMeters) {
+                        jsmSetPointZoneValue(LL.lat, LL.lon, jsvZoneRadiusMeters);
+                        mapProviderParseZones(jsvZoneList);
+                        this.geozoneCenter = LL;
                     }
                 }
-                // parse points
-                mapProviderParseZones(jsvZoneList);
-            } else
-            if (jsvZoneType == ZONE_SWEPT_POINT_RADIUS) {
-                var radiusM = zoneMapGetRadius(false);
-                jsmSetPointZoneValue(LL.lat, LL.lon, radiusM);
-                mapProviderParseZones(jsvZoneList);
             }
         }
     });
@@ -502,63 +437,31 @@ function JSMap(element)
     this.rulerOverlay = null;
     var distDisp = document.getElementById(ID_DISTANCE_DISPLAY);
     if (distDisp != null) {
-        /* */
-        google.maps.event.addListener(this.gmapGoogleMap, 'mousedown', function(event) { // "mousedown", "dragstart", "dragend"
-            // "event.ctrlKey" is not available
-            if (event && event.latLng && self.gmapGoogleMap.rulerDragEnabled) {
-                // clear existing
-                if (self.rulerOverlay != null) { // existing ruler
-                    self.rulerOverlay.setMap(null);
-                    self.rulerOverlay = null;
-                }
-                self.dragRulerLatLon = null;
-                // disable map dragging
-                //self.gmapGoogleMap.setOptions({ draggable: false });
-                // enable ruler
-                var LL = event.latLng; // GLatLng
-                var CC = new JSMapPoint(LL.lat(),LL.lng());
-                var ruler = [];
-                ruler.push(jsNewGLatLng(CC.lat,CC.lon));
-                ruler.push(jsNewGLatLng(LL.lat(),LL.lng())); // copy
-                self.rulerOverlay = jsNewGPolyline(ruler, '#FF6422', 2, 1.0); // google.maps.Polyline
-                self.rulerOverlay.setMap(self.gmapGoogleMap);
-                google.maps.event.addListenerOnce(self.rulerOverlay, 'mouseup', function(event) {
-                    // clear existing
-                    if (self.rulerOverlay != null) { // existing ruler
-                        self.rulerOverlay.setMap(null);
-                        self.rulerOverlay = null;
-                    }
-                    self.dragRulerLatLon = null;
-                    // re-enable dragging
-                    //self.gmapGoogleMap.setOptions({ draggable: true });
-                });
-                self.dragRulerLatLon = CC;
-                jsmSetDistanceDisplay(0);
-            }
-        });
-        google.maps.event.addListener(this.gmapGoogleMap, 'mousemove', function(event) {
-            if (event && event.latLng && self.dragRulerLatLon && self.rulerOverlay) {
-                var CC = self.dragRulerLatLon;  // JSMapPoint
-                var LL = event.latLng;          // GLatLng
-                var ruler = [];
-                ruler.push(jsNewGLatLng(CC.lat,CC.lon));
-                ruler.push(jsNewGLatLng(LL.lat(),LL.lng())); // copy
-                self.rulerOverlay.setPath(ruler);
-                jsmSetDistanceDisplay(geoDistanceMeters(CC.lat, CC.lon, LL.lat(), LL.lng()));
-            }
-        });
-        /* */
         /*
-        google.maps.event.addListener(this.gmapGoogleMap, 'mouseup', function(event) {
-            // is never called
-            alert("MouseUp ...");
-            if (self.dragRulerLatLon) {
-                if (self.rulerOverlay != null) { // existing ruler
-                    self.rulerOverlay.setMap(null);
+        GEvent.addListener(this.gmapGoogleMap, 'mousedown', function (e) { // "dragstart", "dragend"
+            // how do I tell that the control-key has been pressed?
+            if (e.ctrlKey) {
+                if (self.rulerOverLay != null) {
+                    self.gmapGoogleMap.removeOverlay(self.rulerOverlay);
                     self.rulerOverlay = null;
                 }
-                self.dragRulerLatLon = null;
+                jsmSetDistanceDisplay(0);
+                this.dragRulerLatLon = new JSMapPoint(point.lat(),point.lng());
             }
+        });
+        GEvent.addListener(this.gmapGoogleMap, 'mousemove', function (point) {
+            if (self.rulerOverLay != null) {
+                self.gmapGoogleMap.removeOverlay(self.rulerOverlay);
+                self.rulerOverlay = null;
+            }
+            var ruler = [];
+            ruler.push(jsNewGLatLng(this.dragRulerLatLon.lat,this.dragRulerLatLon.lon));
+            ruler.push(jsNewGLatLng(point.lat(),point.lng()));
+            self.rulerOverlay = jsNewGPolyline(latlon, '#FF6422', 2);
+            self.gmapGoogleMap.addOverlay(jsNewGPolyline(latlon, '#FF2222', 2));
+        });
+        GEvent.addListener(this.gmapGoogleMap, 'mouseup', function (e) {
+            self.dragRulerLatLon = null;
         });
         */
     }
@@ -583,27 +486,21 @@ JSMap.prototype.JSUnload = function()
 JSMap.prototype.JSClearLayers = function()
 {
 
-    /* clear all pushpins and route */
-    this.gmapGoogleMap.removePushpinMarkers();
-    this.gmapGoogleMap.removeRouteMarkers();
-
-    /* remove shapes */
-    this._removeShapes();
-
+    /* clear all overlays */
+    //try { this.gmapGoogleMap.clearOverlays(); } catch (e) {}
+	try { this.gmapGoogleMap.overlayMapTypes.setAt(0,null); } catch (e) {};
+	
     /* reset state */
     this._clearReplay();
-    this.jsmapBounds = jsNewGLatLngBounds();
+    this.centerBounds = jsNewGLatLngBounds();
 
     /* redraw shapes? */
-    /* (not sure why shapes are being redrawn here - redrawing these shapes causes
-    ** multiple geozones to be displayed on top of each other (darkening the image)
     if (this.drawShapes) {
         for (var s = 0; s < this.drawShapes.length; s++) {
-            var shape = this.drawShapes[s];
-            shape.setMap(this.gmapGoogleMap);
+            //this.gmapGoogleMap.addOverlay(this.drawShapes[s]);
+			drawShapes[s].setMap(this.gmapGoogleMap);
         }
     }
-    */
 
 };
 
@@ -623,7 +520,7 @@ JSMap.prototype.JSPauseReplay = function(replay)
         // replay currently in progress
         if (this.replayTimer == null) {
             // replay is "PAUSED" ... resuming replay
-            this.gmapGoogleMap.hidePushpinPopups();
+            this._hidePushpinPopup(this.visiblePopupInfoBox);
             jsmHighlightDetailRow(-1, false);
             this._startReplayTimer(replay, 100);
             return REPLAY_RUNNING;
@@ -691,38 +588,16 @@ JSMap.prototype._getReplayState = function()
 /**
 *** Sets the center of the map
 **/
-JSMap.prototype.JSSetCenter = function(center/*JSMapPoint*/, zoom)
-{
-    var gpt = jsNewGLatLng(center.lat, center.lon);
-    if (!zoom || (zoom == 0)) {
-        this.gmapGoogleMap.setCenter(gpt);
-    } else
-    if (zoom > 0) {
-        this.gmapGoogleMap.setCenter(gpt);
-        this.gmapGoogleMap.setZoom(zoom);
-    } else {
-        this.gmapGoogleMap.setCenter(gpt);
-        var gb = jsNewGLatLngBounds();
-        gb.extend(gpt);
-        this.gmapGoogleMap.fitBounds(gb);
-        //var zoom = this.gmapGoogleMap.getZoom();
-    }
-};
-
-/**
-*** Sets the center of the map
-**/
-JSMap.prototype.JSSetCenter_G = function(center/*GLatLng*/, zoom)
+JSMap.prototype.JSSetCenter = function(center, zoom)
 {
     if (zoom) {
-        this.gmapGoogleMap.setCenter(center);
-        this.gmapGoogleMap.setZoom(zoom);
+        //this.gmapGoogleMap.setCenter(jsNewGLatLng(center.lat, center.lon), zoom);
+		this.gmapGoogleMap.setCenter(jsNewGLatLng(center.lat, center.lon));
+		this.gmapGoogleMap.setZoom(zoom);
     } else {
-        this.gmapGoogleMap.setCenter(center);
+        this.gmapGoogleMap.setCenter(jsNewGLatLng(center.lat, center.lon));
     }
 };
-
-// ----------------------------------------------------------------------------
 
 /**
 *** Draw the specified pushpins on the map
@@ -734,55 +609,45 @@ JSMap.prototype.JSDrawPushpins = function(pushPins, recenterMode, replay)
 
     /* clear replay (may be redundant, but repeated just to make sure) */
     this._clearReplay();
-
-    /* make sure we have a bounding box instance */
-    if (!this.jsmapBounds || (this.jsmapBounds == null)) {
-        this.jsmapBounds = jsNewGLatLngBounds();
-    } else {
-        //alert("jsmapBounds already defined ...");
-    }
-
+    
     /* drawn pushpins */
     var drawPushpins = [];
 
     /* recenter map on points */
     var pointCount = 0;
     if ((pushPins != null) && (pushPins.length > 0)) {
-        // extend bounding box around displayed pushpins
         for (var i = 0; i < pushPins.length; i++) {
             var pp = pushPins[i]; // JSMapPushpin
-            if (pp.show && geoIsValid(pp.lat,pp.lon)) {
+            if ((pp.lat != 0.0) || (pp.lon != 0.0)) {
                 pointCount++;
-                this.jsmapBounds.extend(jsNewGLatLng(pp.lat, pp.lon));
-                drawPushpins.push(pp); // JSMapPushpin
+                this.centerBounds.extend(jsNewGLatLng(pp.lat, pp.lon));
+                drawPushpins.push(pp);
             }
         }
-        // MinimumMapBounds: make sure points span a minimum distance top to bottom
-        var rangeRadiusM = 400; // TODO: should make this a configurable options
-        var cenPt = this.jsmapBounds.getCenter();
-        var topPt = geoRadiusPoint(cenPt.lat(), cenPt.lng(), rangeRadiusM,   0.0); // top
-        this.jsmapBounds.extend(jsNewGLatLng(topPt.lat,topPt.lon));
-        var botPt = geoRadiusPoint(cenPt.lat(), cenPt.lng(), rangeRadiusM, 180.0); // bottom
-        this.jsmapBounds.extend(jsNewGLatLng(botPt.lat,botPt.lon));
     }
     if (recenterMode > 0) {
         try {
             if (pointCount <= 0) {
-                this.JSSetCenter(DEFAULT_CENTER, DEFAULT_ZOOM);
+                var centerPt   = jsNewGLatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lon);
+                var zoomFactor = DEFAULT_ZOOM;
+                //this.gmapGoogleMap.setCenter(centerPt, zoomFactor);
+				this.gmapGoogleMap.setCenter(centerPt);
+				this.gmapGoogleMap.setZoom(zoomFactor);
             } else 
             if (recenterMode == RECENTER_LAST) { // center on last point
-                var pp = drawPushpins[drawPushpins.length - 1];
-                this.JSSetCenter(new JSMapPoint(pp.lat, pp.lon));
+                var pp         = drawPushpins[drawPushpins.length - 1];
+                var centerPt   = jsNewGLatLng(pp.lat, pp.lon);
+                this.gmapGoogleMap.setCenter(centerPt);
             } else 
             if (recenterMode == RECENTER_PAN) { // pan to last point
-                var pp = drawPushpins[drawPushpins.length - 1];
-                this.JSSetCenter(new JSMapPoint(pp.lat, pp.lon));
+                var pp         = drawPushpins[drawPushpins.length - 1];
+                var centerPt   = jsNewGLatLng(pp.lat, pp.lon);
+                this.gmapGoogleMap.setCenter(centerPt);
             } else {
-                var centerPt = this.jsmapBounds.getCenter(); // GLatLng
-                //var zoomFactor = this.gmapGoogleMap.getBoundsZoomLevel(this.jsmapBounds); // TODO:
-                this.gmapGoogleMap.fitBounds(this.jsmapBounds);
-                var zoomFactor = this.gmapGoogleMap.getZoom();
-                this.JSSetCenter_G(centerPt, zoomFactor);
+                var centerPt   = this.centerBounds.getCenter();
+                //var zoomFactor = this.gmapGoogleMap.getBoundsZoomLevel(this.centerBounds);
+                //this.gmapGoogleMap.setCenter(centerPt, zoomFactor);
+				this.gmapGoogleMap.fitBounds(this.centerBounds);
             }
         } catch (e) {
             //alert("Error: [JSDrawPushpins] " + e);
@@ -805,9 +670,9 @@ JSMap.prototype.JSDrawPushpins = function(pushPins, recenterMode, replay)
     /* draw pushpins now */
     var pushpinErr = null;
     for (var i = 0; i < drawPushpins.length; i++) {
-        var pp = drawPushpins[i]; // JSMapPushpin
+        var pp = drawPushpins[i];
         try {
-            this._addPushpin(pp); // JSMapPushpin
+            this._addPushpin(pp);
         } catch (e) {
             if (pushpinErr == null) { pushpinErr = e; }
         }
@@ -829,12 +694,12 @@ JSMap.prototype.JSDrawPOI = function(pushPins)
     if ((pushPins != null) && (pushPins.length > 0)) {
         var pushpinErr = null;
         for (var i = 0; i < pushPins.length; i++) {
-            var pp = pushPins[i]; // JSMapPushpin
+            var pp = pushPins[i];
             if ((pp.lat == 0.0) && (pp.lon == 0.0)) {
                 continue;
             }
             try {
-                this._addPushpin(pp); // JSMapPushpin
+                this._addPushpin(pp);
             } catch (e) {
                 if (pushpinErr == null) { pushpinErr = e; }
             }
@@ -850,57 +715,29 @@ JSMap.prototype.JSDrawPOI = function(pushPins)
 *** Adds a single pushpin to the map
 *** @param pp  The JSMapPushpin object to add to the map
 **/
-JSMap.prototype._addPushpin = function(pp) // JSMapPushpin
+JSMap.prototype._addPushpin = function(pp)
 {
     try {
-        var self = this;
 
-        /* point pt */
-        var gPT = jsNewGLatLng(pp.lat, pp.lon); // GLatLng
-
-        /* accuracy radius */
-        var accRadM = pp.accRadM;
-        if (accRadM > 30) {
-            // point-radius shape
-            var color  = pp.isCellLoc? "#FF5555" : "#5555FF";
-            var circle = jsNewGCircle(gPT, accRadM, color, 1, 0.8, color, 0.1);
-            pp.accRadius = circle;
-        } else {
-            pp.accRadius = null;
-        }
-
-        /* background marker */
-        if (pp.bgUrl) {
-            var bgMarker = jsNewImageMarker(
-                gPT,                                                                // GLatLng
-                pp.bgUrl,                                                           // image
-                pp.bgSize?   jsNewGSize(pp.bgSize[0],pp.bgSize[1])      : null,     // iconSize
-                pp.bgOffset? jsNewGPoint(pp.bgOffset[0],pp.bgOffset[1]) : null,     // iconAnchor
-                null,                                                               // shadow
-                null,                                                               // shadowSize
-                jsNewGPoint(5, 1),                                                  // infoWindowAnchor
-                false);                                                             // draggable
-            bgMarker.setInfoWindowHTML(null);
-            pp.bgMarker = bgMarker;
-        } else {
-            pp.bgMarker = null;
-        }
-
-        /* pushpin marker */
-        pp.marker = jsNewImageMarker(
-            gPT,                                                                       // GLatLng
-            pp.iconUrl,                                                                // image
-            pp.iconSize?    jsNewGSize(pp.iconSize[0],pp.iconSize[1])        : null,   // iconSize
-            pp.iconHotspot? jsNewGPoint(pp.iconHotspot[0],pp.iconHotspot[1]) : null,   // iconAnchor
-            pp.shadowUrl,                                                              // shadow
-            pp.shadowSize?  jsNewGSize(pp.shadowSize[0],pp.shadowSize[1])    : null,   // shadowSize
-            jsNewGPoint(5, 1),                                                         // infoWindowAnchor
-            false);                                                                    // draggable
-        pp.marker.setInfoWindowHTML(pp.getHTML());
-        this.gmapGoogleMap.addPushpinMarker(pp);
+        /* marker */
+        var pt = jsNewGLatLng(pp.lat, pp.lon);
+        var marker = jsNewImageMarker(pt,
+            pp.iconUrl,                                                             // image
+            pp.iconSize?   jsNewGSize(pp.iconSize[0],pp.iconSize[1])      : null,   // iconSize
+            pp.iconOffset? jsNewGPoint(pp.iconOffset[0],pp.iconOffset[1]) : null,   // iconAnchor
+            pp.shadownUrl,                                                          // shadow
+            pp.shadowSize? jsNewGSize(pp.shadowSize[0],pp.shadowSize[1])  : null,   // shadowSize
+            jsNewGPoint(5, 1),                                                      // infoWindowAnchor
+            false);                                                                 // draggable
+        //GEvent.addListener(marker, 'click', function() { marker.openInfoWindowHtml(pp.html); });
+		marker.setInfoWindowHTML(pp.html);
+		google.maps.event.addListener(marker, 'click', function() { marker.openPushpinPopup(); });
+        //this.gmapGoogleMap.addOverlay(marker);
+		marker.setMap(this.gmapGoogleMap);
+        pp.marker = marker;
 
     } catch(e) {
-        //alert("AddPushpin ERROR: " + e);
+        //
     }
 };
 
@@ -919,7 +756,7 @@ JSMap.prototype._replayPushpins = function(replay)
             return; // stop
         }
         var pp = this.replayPushpins[this.replayIndex]; // JSMapPushpin
-        if (geoIsValid(pp.lat,pp.lon)) {
+        if ((pp.lat != 0.0) || (pp.lon != 0.0)) {
             break; // valid point
         }
         this.replayIndex++;
@@ -934,16 +771,12 @@ JSMap.prototype._replayPushpins = function(replay)
             var lastPP = this.replayPushpins[lastNdx]; // JSMapPushpin
             if (lastPP.marker) {
                 //this.gmapGoogleMap.removeOverlay(lastPP.marker);
-                lastPP.marker.setMap(null);
-            }
-            if (lastPP.bgMarker) {
-                //this.gmapGoogleMap.removeOverlay(lastPP.bgMarker);
-                lastPP.bgMarker.setMap(null);
+				lastPP.marker.setMap(null);
             }
         }
         this._addPushpin(pp);
         if (replay && (replay >= 2)) {
-            this.gmapGoogleMap.showPushpinPopup(pp);
+            this._showPushpinPopup(pp);
         } else {
             jsmHighlightDetailRow(pp.rcdNdx, true);
         }
@@ -966,7 +799,35 @@ JSMap.prototype.JSShowPushpin = function(pp, center)
         if (center) {
             this.JSSetCenter(new JSMapPoint(pp.lat, pp.lon));
         }
-        this.gmapGoogleMap.showPushpinPopup(pp);
+        this._showPushpinPopup(pp);
+    }
+};
+
+JSMap.prototype._showPushpinPopup = function(pp)
+{
+    this._hidePushpinPopup(this.visiblePopupInfoBox);
+    if (pp) {
+        try {
+            //GEvent.trigger(pp.marker,"click");
+			google.maps.event.trigger(pp.marker,"click");
+        } catch (e) {
+            // ignore
+        }
+        this.visiblePopupInfoBox = pp;
+        jsmHighlightDetailRow(pp.rcdNdx, true);
+    }
+};
+
+JSMap.prototype._hidePushpinPopup = function(pp)
+{
+    //GEvent.trigger(pp.marker,"click");
+	google.maps.event.trigger(pp.marker,"click");
+    if (pp) {
+        jsmHighlightDetailRow(pp.rcdNdx, false);
+    }
+    if (this.visiblePopupInfoBox) {
+        jsmHighlightDetailRow(this.visiblePopupInfoBox.rcdNdx, false);
+        this.visiblePopupInfoBox = null;
     }
 };
 
@@ -978,33 +839,19 @@ JSMap.prototype.JSShowPushpin = function(pp, center)
 **/
 JSMap.prototype.JSDrawRoute = function(points, color)
 {
-
-    /* remove existing route */
-    this.gmapGoogleMap.removeRouteMarkers();
-    
-    /* no route? */
-    if (color == "none") {
-        return;
-    }
-
-    /* draw new route */
-    var LL = []; // GLatLng[]
+    var latlon = [];
     for (var i = 0; i < points.length; i++) {
-        var pt = jsNewGLatLng(points[i].lat, points[i].lon);
-        LL.push(pt);
+        latlon.push(jsNewGLatLng(points[i].lat,points[i].lon));
     }
-    var polyLine = jsNewGPolyline(LL, color, 2, 1.0);
-    polyLine.setMap(this.gmapGoogleMap); // this.gmapGoogleMap.addOverlay(polyLine); // "#003399"
-    this.gmapGoogleMap.addRouteMarker(polyLine);
-    
-    /* draw mid arrows */
+    //this.gmapGoogleMap.addOverlay(jsNewGPolyline(latlon, color, 2, 1.0)); // "#003399"
+	var polline = jsNewGPolyline(latlon, color, 2, 1.0);
+	polline.setMap(this.gmapGoogleMap);
     if (ROUTE_LINE_ARROWS) {
-        this.midArrows(LL);
+        this.midArrows(latlon);
     }
-    
 };
 
-//  [Juan Carlos Argueta] returns the bearing in degrees between two points.
+//  [Juan Carlos Argueta] retReturns the bearing in degrees between two points.
 JSMap.prototype.bearing = function(from, to) {
     // ----- Returns the bearing in degrees between two points. -----
     // ----- North = 0, East = 90, South = 180, West = 270.
@@ -1032,7 +879,7 @@ JSMap.prototype.bearing = function(from, to) {
 //  http://www.google.com/intl/en_ALL/mapfiles/dir_3.png
 //  http://www.google.com/intl/en_ALL/mapfiles/dir_6.png
 //  ...
-JSMap.prototype.arrowHead = function(points) {	  // GLatLng[]
+JSMap.prototype.arrowHead = function(points) {	  
     // ----- obtain the bearing between the last two points
     if (!points || (points.length < 2)) { return; }
     var p1 = points[points.length-1];
@@ -1042,8 +889,7 @@ JSMap.prototype.arrowHead = function(points) {	  // GLatLng[]
     dir = Math.round(dir/3) * 3;
     while (dir >= 120) { dir -= 120; }
     // ----- use the corresponding triangle marker 
-    var arrowMarker = jsNewImageMarker(
-        p1,                                                             // GLatLng
+    var arrowMarker = jsNewImageMarker(p1,
         "http://www.google.com/intl/en_ALL/mapfiles/dir_"+dir+".png",   // image
         jsNewGSize(14,14),                                              // iconSize
         jsNewGPoint(7,7),                                               // iconAnchor
@@ -1053,11 +899,12 @@ JSMap.prototype.arrowHead = function(points) {	  // GLatLng[]
         false                                                           // draggable
         );
     // ----- add arrow marker
-    arrowMarker.setMap(this.gmapGoogleMap);  // this.gmapGoogleMap.addOverlay(arrowMarker);
+    //this.gmapGoogleMap.addOverlay(arrowMarker);
+	arrowMarker.setMap(this.gmapGoogleMap);
 }
       
 // [Juan Carlos Argueta]  A function to put arrow heads at intermediate points
-JSMap.prototype.midArrows = function(points) {	// GLatLng[]	  
+JSMap.prototype.midArrows = function(points) {		  
     if (!points || (points.length < 2)) { return; }
     for (var i = 1; i < points.length - 1; i++) {  
         var p1 = points[i-1];
@@ -1067,8 +914,7 @@ JSMap.prototype.midArrows = function(points) {	// GLatLng[]
         dir = Math.round(dir/3) * 3;
         while (dir >= 120) { dir -= 120; }
         // ----- use the corresponding triangle marker 
-        var arrowMarker = jsNewImageMarker(
-            points[i],                                                      // GLatLng
+        var arrowMarker = jsNewImageMarker(points[i],
             "http://www.google.com/intl/en_ALL/mapfiles/dir_"+dir+".png",   // image
             jsNewGSize(14,14),                                              // iconSize
             jsNewGPoint(7,7),                                               // iconAnchor
@@ -1078,8 +924,8 @@ JSMap.prototype.midArrows = function(points) {	// GLatLng[]
             false                                                           // draggable
             );
         // ----- add arrow marker
-        arrowMarker.setMap(this.gmapGoogleMap);  // this.gmapGoogleMap.addOverlay(arrowMarker);
-        this.gmapGoogleMap.addRouteMarker(arrowMarker);
+        //this.gmapGoogleMap.addOverlay(arrowMarker);
+		arrowMarker.setMap(this.gmapGoogleMap);
     }
 }
 
@@ -1092,7 +938,8 @@ JSMap.prototype._removeShapes = function()
 {
     if (this.drawShapes) {
         for (var s = 0; s < this.drawShapes.length; s++) {
-            this.drawShapes[s].setMap(null);
+            //this.gmapGoogleMap.removeOverlay(this.drawShapes[s]);
+			this.drawShapes[s].setMap(null);
         }
     }
     this.drawShapes = [];
@@ -1111,7 +958,6 @@ JSMap.prototype.JSDrawShape = function(type, radiusM, verticePts, color, zoomTo)
 
     /* no type? */
     if (!type || (type == "") || (type == "!")) {
-        //alert("Removing shapes only ...");
         this._removeShapes();
         return false;
     }
@@ -1124,7 +970,6 @@ JSMap.prototype.JSDrawShape = function(type, radiusM, verticePts, color, zoomTo)
 
     /* no geopoints? */
     if (!verticePts || (verticePts.length == 0)) {
-        alert("No points in shape! ...");
         return false;
     }
 
@@ -1141,29 +986,28 @@ JSMap.prototype.JSDrawShape = function(type, radiusM, verticePts, color, zoomTo)
     if (type == "circle") { // ZONE_POINT_RADIUS
 
         for (var p = 0; p < verticePts.length; p++) {
-            var jPT = verticePts[p]; // JSMapPoint
-            var gPT = jsNewGLatLng(jPT.lat,jPT.lon); // GLatLng
-            //alert("Drawing circle: " + jPT.lat+"/"+jPT.lon +" rad=("+radiusM + ") color="+color);
-
+            var jsPt = verticePts[p]; // JSMapPoint
+            
+            /* calc circle points */
+            var crPts = [];
+            var crLat = geoRadians(jsPt.lat);  // radians
+            var crLon = geoRadians(jsPt.lon);  // radians
+            var d     = radiusM / EARTH_RADIUS_METERS;
+            for (x = 0; x <= 360; x += 6) {         // 6 degrees (saves memory, & it still looks like a circle)
+                var xrad  = geoRadians(x);          // radians
+                var rrLat = Math.asin(Math.sin(crLat) * Math.cos(d) + Math.cos(crLat) * Math.sin(d) * Math.cos(xrad));
+                var rrLon = crLon + Math.atan2(Math.sin(xrad) * Math.sin(d) * Math.cos(crLat), Math.cos(d)-Math.sin(crLat) * Math.sin(rrLat));
+                var gPt   = jsNewGLatLng(geoDegrees(rrLat),geoDegrees(rrLon));
+                crPts.push(gPt);
+                if (mapBounds) { mapBounds.extend(gPt); } // TODO: could stand to be optimized
+            }
+    
             /* draw circle */
-            var circle = jsNewGCircle(gPT, radiusM, color, 2, 0.9, color, 0.1);
-            if (circle != null) {
-                circle.setMap(this.gmapGoogleMap); // this.gmapGoogleMap.addOverlay(crPoly);
-                this.drawShapes.push(circle);
-                didDrawShape = true;
-            }
-
-            /* map bounds */
-            if (mapBounds) {
-                var pt000 = geoRadiusPoint(jPT.lat, jPT.lon, radiusM,   0.0);
-                mapBounds.extend(jsNewGLatLng(pt000.lat,pt000.lon));
-                var pt090 = geoRadiusPoint(jPT.lat, jPT.lon, radiusM,  90.0);
-                mapBounds.extend(jsNewGLatLng(pt090.lat,pt090.lon));
-                var pt180 = geoRadiusPoint(jPT.lat, jPT.lon, radiusM, 180.0);
-                mapBounds.extend(jsNewGLatLng(pt180.lat,pt180.lon));
-                var pt270 = geoRadiusPoint(jPT.lat, jPT.lon, radiusM, 270.0);
-                mapBounds.extend(jsNewGLatLng(pt270.lat,pt270.lon));
-            }
+            var crPoly = jsNewGPolygon(crPts, color, 2, 0.9, color, 0.1);
+            //this.gmapGoogleMap.addOverlay(crPoly);
+			crPoly.setMap(this.gmapGoogleMap);
+            this.drawShapes.push(crPoly);
+            didDrawShape = true;
             
         }
 
@@ -1180,17 +1024,14 @@ JSMap.prototype.JSDrawShape = function(type, radiusM, verticePts, color, zoomTo)
             var BL    = jsNewGLatLng(((vp0.lat<vp1.lat)?vp0.lat:vp1.lat),((vp0.lon<vp1.lon)?vp0.lon:vp1.lon));
             var BR    = jsNewGLatLng(((vp0.lat<vp1.lat)?vp0.lat:vp1.lat),((vp0.lon>vp1.lon)?vp0.lon:vp1.lon));
             var crPts = [ TL, TR, BR, BL, TL ];
+            if (mapBounds) { for (var b = 0; b < crPts.length; b++) { mapBounds.extend(crPts[b]); } }
     
             /* draw rectangle */
             var crPoly = jsNewGPolygon(crPts, color, 2, 0.9, color, 0.1);
-            crPoly.setMap(this.gmapGoogleMap); // this.gmapGoogleMap.addOverlay(crPoly);
+            //this.gmapGoogleMap.addOverlay(crPoly);
+			crPoly.setMap(this.gmapGoogleMap);
             this.drawShapes.push(crPoly);
             didDrawShape = true;
-
-            /* map bounds */
-            if (mapBounds) { 
-                for (var b = 0; b < crPts.length; b++) { mapBounds.extend(crPts[b]); } 
-            }
 
         }
 
@@ -1202,15 +1043,16 @@ JSMap.prototype.JSDrawShape = function(type, radiusM, verticePts, color, zoomTo)
             /* accumulate polygon vertices */
             var crPts = [];
             for (var p = 0; p < verticePts.length; p++) {
-                var gPT = jsNewGLatLng(verticePts[p].lat, verticePts[p].lon);
-                crPts.push(gPT);
-                if (mapBounds) { mapBounds.extend(gPT); }
+                var gPt = jsNewGLatLng(verticePts[p].lat, verticePts[p].lon);
+                crPts.push(gPt);
+                if (mapBounds) { mapBounds.extend(gPt); }
             }
             crPts.push(crPts[0]); // close polygon
 
             /* draw polygon */
             var crPoly = jsNewGPolygon(crPts, color, 2, 0.9, color, 0.1);
-            crPoly.setMap(this.gmapGoogleMap); // this.gmapGoogleMap.addOverlay(crPoly);
+            //this.gmapGoogleMap.addOverlay(crPoly);
+			crPoly.setMap(this.gmapGoogleMap);
             this.drawShapes.push(crPoly);
             didDrawShape = true;
 
@@ -1226,24 +1068,21 @@ JSMap.prototype.JSDrawShape = function(type, radiusM, verticePts, color, zoomTo)
 
         if (mapBounds) {
             for (var p = 0; p < verticePts.length; p++) {
-                var gPT = jsNewGLatLng(verticePts[p].lat, verticePts[p].lon);
-                mapBounds.extend(gPT);
+                var gPt = jsNewGLatLng(verticePts[p].lat, verticePts[p].lon);
+                mapBounds.extend(gPt);
             }
             didDrawShape = true;
         }
-
-    } else {
-
-        alert("Unrecognized shape type: " + type);
 
     }
 
     /* center on shape */
     if (didDrawShape && zoomTo && mapBounds) {
-        var centerPt = mapBounds.getCenter(); // GLatLng
-        this.gmapGoogleMap.fitBounds(mapBounds);
-        var zoomFactor = this.gmapGoogleMap.getZoom();
-        this.JSSetCenter_G(centerPt, zoomFactor);
+        var centerPt   = mapBounds.getCenter(); // GLatLng
+        //var zoomFactor = this.gmapGoogleMap.getBoundsZoomLevel(mapBounds);
+        //this.gmapGoogleMap.setCenter(centerPt, zoomFactor);
+		this.gmapGoogleMap.setCenter(centerPt);
+		this.gmapGoogleMap.fitBounds(mapBounds);
     }
 
     /* shape not supported */
@@ -1253,7 +1092,7 @@ JSMap.prototype.JSDrawShape = function(type, radiusM, verticePts, color, zoomTo)
 
 // ----------------------------------------------------------------------------
 
-var GlobalGeozoneList = [];
+var geozoneList = [];
 
 /**
 *** Draws a Geozone on the map at the specified location
@@ -1275,74 +1114,63 @@ JSMap.prototype.JSDrawGeozone = function(type, radiusM, points, color, primNdx)
     /* Geozone mode */
     jsvGeozoneMode = true;
 
-    /* remove old geozones */
-    for (var i = 0; i < GlobalGeozoneList.length; i++) {
-        GlobalGeozoneList[i].remove();
+    /* remove old geozone */
+    for (var i = 0; i < /*Global*/geozoneList.length; i++) {
+        /*Global*/geozoneList[i].remove();
     }
-    GlobalGeozoneList = [];
+    /*Global*/geozoneList = [];
+    this.geozoneCenter = null;
 
     /* no points? */
     if ((points == null) || (points.length <= 0)) {
+        //alert("No Zone center!");
         return null;
     }
-    this.geozoneIndex  = ((primNdx >= 0) && (primNdx < points.length))? primNdx : 0;
 
     /* draw geozone */
-    var maxLat = -90.0;
-    var minLat =  90.0;
     var pointCount = 0;
     var mapBounds  = jsNewGLatLngBounds();
     if (type == ZONE_POINT_RADIUS) {
 
-        /* adjust radius */
+        var zoneNdx = ((primNdx >= 0) && (primNdx < points.length))? primNdx : 0;
+        var zoneCenter = points[zoneNdx]; // JSMapPoint
         if (isNaN(radiusM))              { radiusM = 5000; }
         if (radiusM > MAX_ZONE_RADIUS_M) { radiusM = MAX_ZONE_RADIUS_M; }
         if (radiusM < MIN_ZONE_RADIUS_M) { radiusM = MIN_ZONE_RADIUS_M; }
         jsvZoneRadiusMeters = radiusM;
+        this.geozoneCenter = zoneCenter;
 
         /* draw points */
-        for (var i = 0; i < points.length; i++) {
-            var pt = points[i];
-            if (geoIsValid(pt.lat,pt.lon)) {
-                var isPrimary = (i == this.geozoneIndex);
-                var zColor = isPrimary? jsvZoneColor : "#55AA55";
-                var prg = new PointRadiusGeozone(this.gmapGoogleMap, i,
-                    pt.lat, pt.lon, radiusM, zColor, (jsvZoneEditable && isPrimary));
-                mapBounds.extend(jsNewGLatLng(pt.lat,pt.lon));
-                mapBounds.extend(prg.calcRadiusPoint(  0.0)); // North
-                mapBounds.extend(prg.calcRadiusPoint(180.0)); // South
-                GlobalGeozoneList.push(prg);
-                pointCount++;
-            }
+        var prg = new PointRadiusGeozone(this.gmapGoogleMap, zoneCenter.lat, zoneCenter.lon, radiusM, jsvZoneColor, jsvZoneEditable);
+        mapBounds.extend(jsNewGLatLng(zoneCenter.lat,zoneCenter.lon));
+        mapBounds.extend(prg.calcRadiusPoint(0.0));
+        mapBounds.extend(prg.calcRadiusPoint(180.0));
+        /*Global*/geozoneList.push(prg);
+        if ((zoneCenter.lat != 0.0) || (zoneCenter.lon != 0.0)) {
+            pointCount = 1;
         }
 
-        /* adjust minimum map bounds */
-        // TODO:
-
         /* center on geozone */
-        /*
-        var centerPt = mapBounds.getCenter(); // GLatLng
-        this.gmapGoogleMap.fitBounds(mapBounds);
-        var zoomFactor = this.gmapGoogleMap.getZoom();
-        this.JSSetCenter_G(centerPt, zoomFactor);
-        */
+        var centerPt   = mapBounds.getCenter(); // GLatLng
+        //var zoomFactor = this.gmapGoogleMap.getBoundsZoomLevel(mapBounds);
+        //this.gmapGoogleMap.setCenter(centerPt, zoomFactor);
+		this.gmapGoogleMap.setCenter(centerPt);
+		this.gmapGoogleMap.fitBounds(mapBounds);
 
     } else
     if (type == ZONE_POLYGON) {
 
         /* draw points */
-        // "radiusM" is not used
-        //radiusM = 500; // may be used later for setting minimum map bounds
         var prg = new PolygonGeozone(this.gmapGoogleMap, points, jsvZoneColor, jsvZoneEditable)
         for (var i = 0; i < prg.verticeMarkers.length; i++) {
             var vm  = prg.verticeMarkers[i];
-            var vpt = vm.getPosition(); // GLatLng
-            if (geoIsValid(vpt.lat(),vpt.lng())) {
-                mapBounds.extend(vm.getPosition());
+            var vpt = vm.getPoint(); // GLatLng
+            if ((vpt.lat() != 0.0) || (vpt.lng() != 0.0)) {
+                mapBounds.extend(vm.getPoint());
                 pointCount++;
             }
         }
-        GlobalGeozoneList.push(prg);
+        /*Global*/geozoneList.push(prg);
 
     } else
     if (type == ZONE_SWEPT_POINT_RADIUS) {
@@ -1353,15 +1181,14 @@ JSMap.prototype.JSDrawGeozone = function(type, radiusM, points, color, primNdx)
         if (radiusM > MAX_ZONE_RADIUS_M) { radiusM = MAX_ZONE_RADIUS_M; }
         if (radiusM < MIN_ZONE_RADIUS_M) { radiusM = MIN_ZONE_RADIUS_M; }
         jsvZoneRadiusMeters = radiusM;
+        this.geozoneCenter = zoneCenter;
 
         /* draw points */
         var prg = new CorridorGeozone(this.gmapGoogleMap, points, radiusM, jsvZoneColor, jsvZoneEditable);
         for (var i = 0; i < prg.verticeMarkers.length; i++) {
             var vm = prg.verticeMarkers[i];
             if (vm.isVisible) { // point-radius vertice
-                var vpt = vm.getPosition(); // GLatLng
-                if (vpt.lat() < minLat) { minLat = vpt.lat(); }
-                if (vpt.lat() > maxLat) { maxLat = vpt.lat(); }
+                var vpt = vm.getPoint(); // GLatLng
                 var pt000 = geoRadiusPoint(vpt.lat(), vpt.lng(), radiusM,   0.0);
                 mapBounds.extend(jsNewGLatLng(pt000.lat,pt000.lon));
                 var pt090 = geoRadiusPoint(vpt.lat(), vpt.lng(), radiusM,  90.0);
@@ -1373,14 +1200,12 @@ JSMap.prototype.JSDrawGeozone = function(type, radiusM, points, color, primNdx)
                 pointCount++;
             }
         }
-        GlobalGeozoneList.push(prg);
+        /*Global*/geozoneList.push(prg);
 
         /* center on geozone */
-        //var centerPt = mapBounds.getCenter(); // GLatLng
-        ////var zoomFactor = this.gmapGoogleMap.getBoundsZoomLevel(mapBounds);
-        //this.gmapGoogleMap.fitBounds(mapBounds);
-        //var zoomFactor = this.gmapGoogleMap.getZoom();
-        //this.JSSetCenter_G(centerPt, zoomFactor);
+        //var centerPt   = mapBounds.getCenter(); // GLatLng
+        //var zoomFactor = this.gmapGoogleMap.getBoundsZoomLevel(mapBounds);
+        //this.gmapGoogleMap.setCenter(centerPt, zoomFactor);
 
     } else {
 
@@ -1390,29 +1215,16 @@ JSMap.prototype.JSDrawGeozone = function(type, radiusM, points, color, primNdx)
 
     /* center on geozone */
     if (pointCount > 0) {
-
-        // MinimumMapBounds: make sure points span a minimum distance top to bottom
-        if (maxLat >= minLat) {
-            var rangeRadiusM = radiusM * 3;
-            var cenPt = mapBounds.getCenter();
-            var topPt = geoRadiusPoint(maxLat, cenPt.lng(), rangeRadiusM,   0.0); // top
-            mapBounds.extend(jsNewGLatLng(topPt.lat,topPt.lon));
-            var botPt = geoRadiusPoint(minLat, cenPt.lng(), rangeRadiusM, 180.0); // bottom
-            mapBounds.extend(jsNewGLatLng(botPt.lat,botPt.lon));
-        }
-
-        /* center on points */
-        var centerPt = mapBounds.getCenter(); // GLatLng
+        var centerPt   = mapBounds.getCenter(); // GLatLng
         //var zoomFactor = this.gmapGoogleMap.getBoundsZoomLevel(mapBounds);
-        this.gmapGoogleMap.fitBounds(mapBounds);
-        var zoomFactor = this.gmapGoogleMap.getZoom();
-        this.JSSetCenter_G(centerPt, zoomFactor);
-
+        //this.gmapGoogleMap.setCenter(centerPt, zoomFactor);
+		this.gmapGoogleMap.setCenter(centerPt);
+		this.gmapGoogleMap.fitBounds(mapBounds);
     } else {
-
-        /* default center/zoom */
-        this.JSSetCenter(DEFAULT_CENTER, DEFAULT_ZOOM);
-
+        var centerPt   = jsNewGLatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lon); // GLatLng
+        var zoomFactor = DEFAULT_ZOOM;
+        this.gmapGoogleMap.setCenter(centerPt);
+		this.gmapGoogleMap.setZoom(zoomFactor);
     }
 
     return null;
@@ -1421,56 +1233,50 @@ JSMap.prototype.JSDrawGeozone = function(type, radiusM, points, color, primNdx)
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
-var pointRadiusRadiusHeading = 60.0;
-
-/* this draws a single point-circle geozone */
-function PointRadiusGeozone(gMap, zNdx,
-    lat, lon, radiusM, color, editable)
+function PointRadiusGeozone(gMap, lat, lon, radiusM, color, editable)
 {
     var self = this;
 
     /* circle attributes */
     this.googleMap        = gMap;
-    this.zoneIndex        = zNdx;
     this.radiusMeters     = (radiusM <= MAX_ZONE_RADIUS_M)? Math.round(radiusM) : MAX_ZONE_RADIUS_M;
     this.radiusPoint      = null;
     this.centerMarker     = null;
     this.radiusMarker     = null;
     this.circlePolygon    = null;
     this.shapeColor       = (color && (color != ""))? color : "#0000FF";
-    this.centerPoint      = jsNewGLatLng(lat, lon); // GLatLng
 
     /* center Icon/marker */
+    this.centerPoint      = jsNewGLatLng(lat, lon);
+    this.centerMarker     = jsNewImageMarker(this.centerPoint,
+        "http://labs.google.com/ridefinder/images/mm_20_blue.png",      // image
+        jsNewGSize(12,20),                                              // iconSize
+        jsNewGPoint(6,20),                                              // iconAnchor
+        "http://labs.google.com/ridefinder/images/mm_20_shadow.png",    // shadow
+        jsNewGSize(22,20),                                              // shadowSize
+        null,                                                           // infoWindowAnchor
+        editable                                                        // draggable
+        );
+    //this.googleMap.addOverlay(this.centerMarker);
+	this.centerMarker.setMap(this.googleMap);
+
+    /* editable? */
     if (editable) {
-        
-        /* create draggable center marker */
-        this.centerMarker = jsNewImageMarker(
-            this.centerPoint,                                               // GLatLng
-            "http://labs.google.com/ridefinder/images/mm_20_blue.png",      // image
-            jsNewGSize(12,20),                                              // iconSize
-            jsNewGPoint(6,20),                                              // iconAnchor
-            "http://labs.google.com/ridefinder/images/mm_20_shadow.png",    // shadow
-            jsNewGSize(22,20),                                              // shadowSize
-            null,                                                           // infoWindowAnchor
-            true                                                            // draggable
-            );
-        this.centerMarker.setMap(this.googleMap);
-        this.centerMarker.setDraggable(true);
-        google.maps.event.addListener(this.centerMarker, "dragend", function(event) {
-            var oldCP = self.centerPoint; // GLatLng
-            var oldRP = self.radiusMarker.getPosition(); // GLatLng
-            var newCP = self.centerMarker.getPosition(); // GLatLng
+
+        /* center marker dragging */
+        this.centerMarker.enableDragging();
+        GEvent.addListener(this.centerMarker, "dragend", function() {
+            var oldCP = self.centerPoint;
+            var oldRP = self.radiusMarker.getPoint();
             var newRP = self.calcRadiusPoint(geoHeading(oldCP.lat(),oldCP.lng(),oldRP.lat(),oldRP.lng()));
-            self.centerPoint = newCP;  // GLatLng
-            self.radiusMarker.setPosition(newRP);
+            self.centerPoint = self.centerMarker.getPoint();
+            self.radiusMarker.setPoint(newRP);
             self.drawCircle(); 
-            jsmSetPointZoneValue(newCP.lat(), newCP.lng(), self.radiusMeters);
         });
     
         /* radius Icon/Marker */
-        this.radiusPoint      = this.calcRadiusPoint(/*Global*/pointRadiusRadiusHeading); // GLatLng
-        this.radiusMarker     = jsNewImageMarker(
-            this.radiusPoint,                                               // GLatLng
+        this.radiusPoint      = this.calcRadiusPoint(60.0);
+        this.radiusMarker     = jsNewImageMarker(this.radiusPoint,
             "http://labs.google.com/ridefinder/images/mm_20_gray.png",      // image
             jsNewGSize(12,20),                                              // iconSize
             jsNewGPoint(6,20),                                              // iconAnchor
@@ -1479,34 +1285,31 @@ function PointRadiusGeozone(gMap, zNdx,
             null,                                                           // infoWindowAnchor
             true                                                            // draggable
             );
-        this.radiusMarker.setMap(this.googleMap); // this.googleMap.addOverlay(this.radiusMarker);
-        this.radiusMarker.setDraggable(true); // enableDragging();
-        google.maps.event.addListener(this.radiusMarker, "dragend", function(event) {
-            var oldCP = self.centerMarker.getPosition();
-            var newRP = self.radiusMarker.getPosition();
+        //this.googleMap.addOverlay(this.radiusMarker);
+		this.radiusMarker.setMap(this.googleMap);
+
+        /* radius marker dragging */
+        //this.radiusMarker.enableDragging();
+		this.radiusMarker.setDraggable(true);
+        this.googleMap.event.addListener(this.radiusMarker, "dragend", function() {
+            var oldCP = self.centerMarker.getPoint();
+            var newRP = self.radiusMarker.getPoint();
             var radM  = Math.round(geoDistanceMeters(oldCP.lat(),oldCP.lng(),newRP.lat(),newRP.lng()));
             self.radiusMeters = radM;
-            pointRadiusRadiusHeading = geoHeading(oldCP.lat(),oldCP.lng(),newRP.lat(),newRP.lng());
             if (self.radiusMeters < MIN_ZONE_RADIUS_M) {
                 self.radiusMeters = MIN_ZONE_RADIUS_M;
-                newRP = self.calcRadiusPoint(pointRadiusRadiusHeading);
-                self.radiusMarker.setPosition(newRP);
+                newRP = self.calcRadiusPoint(geoHeading(oldCP.lat(),oldCP.lng(),newRP.lat(),newRP.lng()));
+                self.radiusMarker.setPoint(newRP);
             } else
             if (self.radiusMeters > MAX_ZONE_RADIUS_M) {
                 self.radiusMeters = MAX_ZONE_RADIUS_M;
-                newRP = self.calcRadiusPoint(pointRadiusRadiusHeading);
-                self.radiusMarker.setPosition(newRP); // .setPoint(newRP);
+                newRP = self.calcRadiusPoint(geoHeading(oldCP.lat(),oldCP.lng(),newRP.lat(),newRP.lng()));
+                self.radiusMarker.setPoint(newRP);
             }
-            //self.drawCircle();  <-- redrawn during zoneReset below
-            jsmSetPointZoneValue(oldCP.lat(), oldCP.lng(), self.radiusMeters);
-            // need to redraw other point-radius zones as well
-            _zoneReset();
+            jsvZoneRadiusMeters = self.radiusMeters;
+            self.drawCircle(); 
         });
 
-    } else {
-        
-        this.centerMarker = null;
-        
     }
 
     /* draw circle */
@@ -1521,7 +1324,7 @@ PointRadiusGeozone.prototype.type = function()
 
 PointRadiusGeozone.prototype.calcRadiusPoint = function(heading)
 {
-    var cpt = (this.centerMarker != null)? this.centerMarker.getPosition() : this.centerPoint; // GLatLng
+    var cpt = this.centerMarker.getPoint();   // GLatLng [MUST be 'centerMarker.getPoint()' NOT 'centerPoint']
     var rp  = geoRadiusPoint(cpt.lat(), cpt.lng(), this.radiusMeters, heading);
     return jsNewGLatLng(rp.lat,  rp.lon);
 };
@@ -1529,34 +1332,41 @@ PointRadiusGeozone.prototype.calcRadiusPoint = function(heading)
 PointRadiusGeozone.prototype.drawCircle = function()
 {
 
-    /* remove old circle */
-    if (this.circlePolygon != null) {
-        this.circlePolygon.setMap(null);
+    /* calc circle points */
+    var points = [];
+    var crLat  = geoRadians(this.centerPoint.latLng.lat());  // radians
+    var crLon  = geoRadians(this.centerPoint.latLng.lng());  // radians
+    var d      = this.radiusMeters / EARTH_RADIUS_METERS;
+    for (x = 0; x <= 360; x += 6) {         // 6 degrees (saves memory, & it still looks like a circle)
+        var xrad  = geoRadians(x);          // radians
+        var rrLat = Math.asin(Math.sin(crLat) * Math.cos(d) + Math.cos(crLat) * Math.sin(d) * Math.cos(xrad));
+        var rrLon = crLon + Math.atan2(Math.sin(xrad) * Math.sin(d) * Math.cos(crLat), Math.cos(d)-Math.sin(crLat) * Math.sin(rrLat));
+        var pt    = jsNewGLatLng(geoDegrees(rrLat),geoDegrees(rrLon));
+        points.push(pt);
     }
 
+    /* remove old circle */
+    if (this.circlePolygon != null) {
+        //this.googleMap.removeOverlay(this.circlePolygon);
+		this.circlePolygon.setMap(null);
+    }
+    
     /* draw circle */
-    var color    = this.shapeColor;
-    var circPoly = jsNewGCircle(
-        this.centerPoint, this.radiusMeters,
-        color, 2, 0.9, color, 0.1);
-    circPoly.setMap(this.googleMap);
-    this.circlePolygon = circPoly;
-
-    /* "click" */
-    var self = this;
-    google.maps.event.addListener(this.circlePolygon, "click", function(event) {
-        if (!event || !event.latLng) { return; }
-        var point = event.latLng;
-        zoneMapSetIndex(self.zoneIndex,false);
-        _zoneReset();
-    });
+    var color = this.shapeColor;
+    //this.circlePolygon = jsNewGPolyline(points, "#0000FF", 2, 0.9);
+    this.circlePolygon = jsNewGPolygon(points, color, 2, 0.9, color, 0.1);
+    //this.googleMap.addOverlay(this.circlePolygon);
+	this.circlePolygon.setMap(this.googleMap);
+    
+    /* set Geozone elements */
+    jsmSetPointZoneValue(this.centerPoint.latLng.lat(), this.centerPoint.latLng.lng(), this.radiusMeters);
 
 };
 
-//PointRadiusGeozone.prototype.getCenter = function()
-//{
-//    return this.centerPoint; // GLatLng
-//};
+PointRadiusGeozone.prototype.getCenter = function()
+{
+    return this.centerPoint; // GLatLng
+};
 
 PointRadiusGeozone.prototype.getRadiusMeters = function()
 {
@@ -1566,60 +1376,54 @@ PointRadiusGeozone.prototype.getRadiusMeters = function()
 PointRadiusGeozone.prototype.remove = function()
 {
     if (this.radiusMarker != null) {
-        this.radiusMarker.setMap(null);
+        //this.googleMap.removeOverlay(this.radiusMarker);
+		this.radiusMarker.setMap(null);
     }
     if (this.centerMarker != null) {
-        this.centerMarker.setMap(null);
+        //this.googleMap.removeOverlay(this.centerMarker);
+		this.centerMarker.setMap(null);
     }
-    if (this.circlePolygon != null) {
-        this.circlePolygon.setMap(null);
-    }
+    //this.googleMap.removeOverlay(this.circlePolygon);
+	this.circlePolygon.setMap(null);
 };
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
-function PolygonGeozone(gMap, points/*JSMapPoint[]*/, color, edit)
+function PolygonGeozone(gMap, points, color, editable)
 {
     var self = this;
 
-    /* polygon attributes */
+    /* circle attributes */
     this.googleMap        = gMap;
     this.verticeMarkers   = [];
     this.centerMarker     = null;
     this.shapeColor       = (color && (color != ""))? color : "#0000FF";
-    this.polyBounds       = null;
-    this.polygon          = null;
-    this.editable         = edit;
+    this.centerBounds     = null;
 
     /* create vertices */
     var count  = 0;
     var bounds = jsNewGLatLngBounds();
     for (var i = 0; i < points.length; i++) {
-        var p = points[i]; // JSMapPoint
-        if (!geoIsValid(p.lat,p.lon)) { continue; }
+        var p = points[i];
 
         /* vertice Icon/marker */
-        var vertPoint = jsNewGLatLng(p.lat, p.lon);
-        var vertPushpin = (count == 0)? 
-            "http://labs.google.com/ridefinder/images/mm_20_green.png" :
-            "http://labs.google.com/ridefinder/images/mm_20_blue.png";
-        var vertMarker = jsNewImageMarker(
-            vertPoint,                                                      // GLatLng
-            vertPushpin,                                                    // image
+        var vertPoint       = jsNewGLatLng(p.lat, p.lon);
+        var vertMarker      = jsNewImageMarker(vertPoint,
+            "http://labs.google.com/ridefinder/images/mm_20_blue.png",      // image
             jsNewGSize(12,20),                                              // iconSize
             jsNewGPoint(6,20),                                              // iconAnchor
             "http://labs.google.com/ridefinder/images/mm_20_shadow.png",    // shadow
             jsNewGSize(22,20),                                              // shadowSize
             null,                                                           // infoWindowAnchor
-            this.editable                                                   // draggable
+            editable                                                        // draggable
             );
         vertMarker.pointIndex = i;
-        vertMarker.isEditable = this.editable;
+        vertMarker.isEditable = editable;
         this.verticeMarkers.push(vertMarker);
         bounds.extend(vertPoint);
-        if (geoIsValid(p.lat,p.lon)) {
-            vertMarker.setMap(this.googleMap);
+        if ((p.lat != 0.0) || (p.lon != 0.0)) {
+            this.googleMap.addOverlay(vertMarker);
             vertMarker.isVisible = true;     // polygon vertice
             vertMarker.isValid   = true;
             count++;
@@ -1631,38 +1435,39 @@ function PolygonGeozone(gMap, points/*JSMapPoint[]*/, color, edit)
     }
 
     /* editable? */
-    if (this.editable) {
+    if (editable) {
 
         /* enable vertice dragging */
         for (var i = 0; i < this.verticeMarkers.length; i++) {
-            this._polygonVerticeDrag(this.verticeMarkers[i], i);
+            this._enableVerticeDrag(this.verticeMarkers[i]);
         }
 
         /* center point */
-        var center = bounds.getCenter();
-        this.centerMarker = jsNewImageMarker(
-            center,                                                         // GLatLng
+        var center            = bounds.getCenter();
+        this.centerMarker     = jsNewImageMarker(center,
             "http://labs.google.com/ridefinder/images/mm_20_red.png",       // image
             jsNewGSize(12,20),                                              // iconSize
             jsNewGPoint(6,20),                                              // iconAnchor
             "http://labs.google.com/ridefinder/images/mm_20_shadow.png",    // shadow
             jsNewGSize(22,20),                                              // shadowSize
             null,                                                           // infoWindowAnchor
-            true                                                            // draggable
+            editable                                                        // draggable
             );
         this.centerMarker.lastPoint = center;
-        this.centerMarker.setDraggable(true);
-        google.maps.event.addListener(this.centerMarker, "dragend", function(event) {
-            var thisPoint = self.centerMarker.getPosition(); // GLatLng
+        //this.centerMarker.enableDragging();
+		this.centerMarker.setDraggable(true);
+        //GEvent.addListener(this.centerMarker, "dragend", function() {
+		this.googleMap.events.addListener(this.centerMarker, "dragend", function() {
+            var thisPoint = self.centerMarker.getPoint(); // GLatLng
             var lastPoint = self.centerMarker.lastPoint;  // GLatLng
-            var deltaLat  = thisPoint.lat() - lastPoint.lat();
-            var deltaLon  = thisPoint.lng() - lastPoint.lng();
+            var deltaLat  = thisPoint.latLng.lat() - lastPoint.lat();
+            var deltaLon  = thisPoint.latLng.lng() - lastPoint.lng();
             for (var i = 0; i < self.verticeMarkers.length; i++) {
-                var vm  = self.verticeMarkers[i]; // G
-                var vpt = vm.getPosition();
-                if (geoIsValid(vpt.lat(),vpt.lng())) {
+                var vm  = self.verticeMarkers[i];
+                var vpt = vm.getPoint();
+                if ((vpt.lat() != 0.0) || (vpt.lng() != 0.0)) {
                     var npt = jsNewGLatLng(vpt.lat() + deltaLat, vpt.lng() + deltaLon);
-                    vm.setPosition(npt);
+                    vm.setPoint(npt);
                     _jsmSetPointZoneValue(vm.pointIndex, npt.lat(), npt.lng(), 0);
                 } else {
                     _jsmSetPointZoneValue(vm.pointIndex, 0.0, 0.0, 0);
@@ -1672,133 +1477,135 @@ function PolygonGeozone(gMap, points/*JSMapPoint[]*/, color, edit)
             self.drawPolygon();
         });
         if (count > 0) {
-            this.centerMarker.setMap(this.googleMap);
+            //this.googleMap.addOverlay(this.centerMarker);
+			this.centerMarker.setMap(this.googleMap);
             this.centerMarker.isVisible = true;     // polygon center
         } else {
             this.centerMarker.isVisible = false;    // polygon center
         }
         
     }
-
+    
     /* draw polygon */
     this.drawPolygon();
 
 };
-
-PolygonGeozone.prototype._polygonVerticeDrag = function(marker, iNdx)
-{
-    // due to JavaScript closure rules, this must be in a separate function
-    var self = this;
-    var vertMarker = marker;
-    vertMarker.setDraggable(true);
-    google.maps.event.addListener(vertMarker, "dragend", function(event) {
-        var vNdx  = vertMarker.pointIndex;
-        var point = vertMarker.getPosition();
-        zoneMapSetIndex(vNdx, false);
-        _jsmSetPointZoneValue(vNdx, point.lat(), point.lng(), 0);
-        self.drawPolygon(); 
-        self.polyBounds = jsNewGLatLngBounds();
-        for (var x = 0; x < self.verticeMarkers.length; x++) {
-            var vpt = self.verticeMarkers[x].getPosition();
-            if (geoIsValid(vpt.lat(),vpt.lng())) {
-                self.polyBounds.extend(vpt);
-            }
-        }
-        var polyCenter = self.polyBounds.getCenter(); // GLatLng
-        self.centerMarker.setPosition(polyCenter);
-        self.centerMarker.lastPoint = polyCenter;
-    });
-}
 
 PolygonGeozone.prototype.type = function()
 {
     return ZONE_POLYGON;
 };
 
+PolygonGeozone.prototype._enableVerticeDrag = function(marker)
+{
+    var self = this;
+    var finalMarker = marker;
+    finalMarker.enableDragging();
+    GEvent.addListener(finalMarker, "dragend", function() {
+        var ndx   = finalMarker.pointIndex;
+        var point = finalMarker.getPoint();
+        _jsmSetPointZoneValue(ndx, point.latLng.lat(), point.latLng.lng(), 0);
+        self.drawPolygon(); 
+        self.centerBounds = jsNewGLatLngBounds();
+        for (var i = 0; i < self.verticeMarkers.length; i++) {
+            var vpt = self.verticeMarkers[i].getPoint();
+            if ((vpt.lat() != 0.0) || (vpt.lng() != 0.0)) {
+                self.centerBounds.extend(vpt);
+            }
+        }
+        self.centerMarker.setPoint(self.centerBounds.getCenter());
+        self.centerMarker.lastPoint = self.centerBounds.getCenter();
+    });
+};
+
 PolygonGeozone.prototype.drawPolygon = function()
 {
 
+    /* remove old polygon */
+    if (this.polygon != null) {
+        //this.googleMap.removeOverlay(this.polygon);
+		this.polygon.setMap(null);
+    }
+
     /* points */
-    var points = []; // GLatLng[]
+    var points = [];
     var bounds = jsNewGLatLngBounds();
     if (this.verticeMarkers.length > 0) {
         for (var i = 0; i < this.verticeMarkers.length; i++) {
             var vm  = this.verticeMarkers[i];
-            var vpt = vm.getPosition(); 
+            var vpt = vm.getPoint();
             if (vm.isVisible) { // polygon vertice
-                vm.setMap(null);
+                //this.googleMap.removeOverlay(vm);
+				vm.setMap(null);
                 vm.isVisible = false;  // polygon vertice
             }
-            if (geoIsValid(vpt.lat(),vpt.lng())) {
+            if ((vpt.lat() != 0.0) || (vpt.lng() != 0.0)) {
                 if (vm.isEditable) {
-                    vm.setMap(this.googleMap);
+                    //this.googleMap.addOverlay(vm);
+					vm.setMap(this.googleMap);
                     vm.isVisible = true;  // polygon vertice
                 }
-                points.push(vpt);  // GLatLng
+                points.push(vpt);
                 bounds.extend(vpt);
             }
         }
         if (points.length > 0) {
-            points.push(points[0]); // GLatLng close polygon
+            points.push(points[0]); // close polygon
         }
     }
-
+    
     /* center marker */
     if (this.centerMarker != null) {
         var center = bounds.getCenter();
         if (points.length > 0) {
-            this.centerMarker.setPosition(center);
+            this.centerMarker.setPoint(center);
             this.centerMarker.lastPoint = center;
             if (!this.centerMarker.isVisible) {  // polygon center
-                this.centerMarker.setMap(this.googleMap);
+                //this.googleMap.addOverlay(this.centerMarker);
+				this.centerMarker.setMap(this.googleMap);
                 this.centerMarker.isVisible = true; // polygon center
             }
         } else {
             if (this.centerMarker.isVisible) { // polygon center
-                this.centerMarker.setMap(null);
+                //this.googleMap.removeOverlay(this.centerMarker);
+				this.centerMarker.setMap(null);
                 this.centerMarker.isVisible = false; // polygon center
             }
         }
     }
 
     /* draw polygon */
-    if (points.length >= 3) {
-        if (this.polygon == null) {
-            var color = this.shapeColor;
-            this.polygon = jsNewGPolygon(points, color, 2, 0.9, color, 0.1);
-        } else {
-            this.polygon.setPath(points);
-        }
-        this.polygon.setMap(this.googleMap);
-    } else 
-    if (this.polygon != null) {
-        this.polygon.setMap(null);
-        this.polygon = null;
-    }
+    var color = this.shapeColor;
+    this.polygon = jsNewGPolygon(points, color, 2, 0.9, color, 0.1);
+    //this.googleMap.addOverlay(this.polygon);
+	this.polygon.setMap(this.googleMap);
 
 };
 
 PolygonGeozone.prototype.remove = function()
 {
-    if (this.centerMarker != null) { // polygon center
-        this.centerMarker.setMap(null);
-        this.centerMarker.isVisible = false;
+    if (this.centerMarker && this.centerMarker.isVisible) { // polygon center
+        //this.googleMap.removeOverlay(this.centerMarker);
+		this.centerMarker.setMap(null);
     }
     if (this.verticeMarkers != null) {
         for (var i = 0; i < this.verticeMarkers.length; i++) {
-            this.verticeMarkers[i].setMap(null);
-            this.verticeMarkers[i].isVisible = false;
+            if (this.verticeMarkers[i].isVisible) { // polygon vertice
+                //this.googleMap.removeOverlay(this.verticeMarkers[i]);
+				this.verticeMarkers[i].setMap(null);
+            }
         }
     }
     if (this.polygon != null) {
-        this.polygon.setMap(null);
+        //this.googleMap.removeOverlay(this.polygon);
+		this.polygon.setMap(null);
     }
 };
 
-//PointRadiusGeozone.prototype.getCenter = function()
-//{
-//    return this.centerMarker.getPosition();  // GLatLng
-//};
+PointRadiusGeozone.prototype.getCenter = function()
+{
+    return this.centerMarker.getPoint(); // GLatLng
+};
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
@@ -1810,22 +1617,20 @@ function CorridorGeozone(gMap, points, radiusM, color, editable)
     /* circle attributes */
     this.googleMap        = gMap;
     this.radiusMeters     = (radiusM <= MAX_ZONE_RADIUS_M)? Math.round(radiusM) : MAX_ZONE_RADIUS_M;
-    this.verticeMarkers   = []; // GMarker[]
+    this.verticeMarkers   = [];
     this.shapeColor       = (color && (color != ""))? color : "#0000FF";
     this.corridor         = [];
-    this.corrBounds       = null;
 
     /* create vertices */
     var count  = 0;
     var bounds = jsNewGLatLngBounds();
     for (var i = 0; i < points.length; i++) {
         var p = points[i]; // JSMapPoint
-        if (!geoIsValid(p.lat,p.lon)) { continue; }
+        if ((p.lat == 0.0) && (p.lon == 0.0)) { continue; }
 
         /* vertice Icon/marker */
         var vertPoint       = jsNewGLatLng(p.lat, p.lon);
-        var vertMarker      = jsNewImageMarker(
-            vertPoint,                                                      // GLatLng
+        var vertMarker      = jsNewImageMarker(vertPoint,
             "http://labs.google.com/ridefinder/images/mm_20_blue.png",      // image
             jsNewGSize(12,20),                                              // iconSize
             jsNewGPoint(6,20),                                              // iconAnchor
@@ -1835,10 +1640,11 @@ function CorridorGeozone(gMap, points, radiusM, color, editable)
             editable                                                        // draggable
             );
         vertMarker.pointIndex = i;
-        this.verticeMarkers.push(vertMarker); // GMarker
+        this.verticeMarkers.push(vertMarker);
         bounds.extend(vertPoint);
-        if (geoIsValid(p.lat,p.lon)) {
-            vertMarker.setMap(this.googleMap); // this.googleMap.addOverlay(vertMarker);
+        if ((p.lat != 0.0) || (p.lon != 0.0)) {
+            //this.googleMap.addOverlay(vertMarker);
+			vertMarker.setMap(this.googleMap);
             vertMarker.isVisible = true; // corridor vertice
             vertMarker.isValid   = true;
             count++;
@@ -1854,7 +1660,7 @@ function CorridorGeozone(gMap, points, radiusM, color, editable)
 
         /* enable vertice dragging */
         for (var i = 0; i < this.verticeMarkers.length; i++) {
-            this._corridorVerticeDrag(this.verticeMarkers[i], i);
+            this._enableVerticeDrag(this.verticeMarkers[i]);
         }
         
     }
@@ -1869,27 +1675,28 @@ CorridorGeozone.prototype.type = function()
     return ZONE_SWEPT_POINT_RADIUS;
 };
 
-CorridorGeozone.prototype._corridorVerticeDrag = function(marker, iNdx)
+CorridorGeozone.prototype._enableVerticeDrag = function(marker)
 {
     var self = this;
-    var vertMarker = marker;
-    vertMarker.setDraggable(true);
-    google.maps.event.addListener(vertMarker, "dragend", function(event) {
-        var vNdx  = vertMarker.pointIndex;
-        var point = vertMarker.getPosition();  // GLatLng
-        zoneMapSetIndex(vNdx, false);
-        _jsmSetPointZoneValue(vNdx, point.lat(), point.lng(), self.radiusMeters);
+    var finalMarker = marker;
+    finalMarker.setDraggable(true);
+    //GEvent.addListener(finalMarker, "dragend", function() {
+	this.googleMap.events.addListener(finalMarker, "dragend", function() {
+        var ndx   = finalMarker.pointIndex;
+        var point = finalMarker.getPoint(); // GLatLng
+        _jsmSetPointZoneValue(ndx, point.latLng.lat(), point.latLng.lng(), self.radiusMeters);
         self.drawCorridor(); 
-        //self.corrBounds = jsNewGLatLngBounds();
-        //for (var i = 0; i < self.verticeMarkers.length; i++) {
-        //    var vpt = self.verticeMarkers[i].getPosition(); 
-        //    if (geoIsValid(vpt.lat(),vpt.lng())) {
-        //        self.corrBounds.extend(vpt);
-        //    }
-        //}
-        // --
-        //self.centerMarker.setPosition(self.corrBounds.getCenter()); // .setPoint(self.corrBounds.getCenter());
-        //self.centerMarker.lastPoint = self.corrBounds.getCenter();
+        /*
+        self.centerBounds = jsNewGLatLngBounds();
+        for (var i = 0; i < self.verticeMarkers.length; i++) {
+            var vpt = self.verticeMarkers[i].getPoint();
+            if ((vpt.lat() != 0.0) || (vpt.lng() != 0.0)) {
+                self.centerBounds.extend(vpt);
+            }
+        }
+        */
+        //self.centerMarker.setPoint(self.centerBounds.getCenter());
+        //self.centerMarker.lastPoint = self.centerBounds.getCenter();
     });
 };
 
@@ -1899,7 +1706,8 @@ CorridorGeozone.prototype.drawCorridor = function()
     /* remove old corridor */
     if (this.corridor != null) {
         for (var i = 0; i < this.corridor.length; i++) {
-            this.corridor[i].setMap(null);
+            //this.googleMap.removeOverlay(this.corridor[i])
+			this.corridor[i].setMap(null);
         };
     }
     this.corridor = [];
@@ -1911,24 +1719,35 @@ CorridorGeozone.prototype.drawCorridor = function()
         var lastPT = null;
         for (var i = 0; i < this.verticeMarkers.length; i++) {
             var vm     = this.verticeMarkers[i];
-            var vPT    = vm.getPosition(); // vertice GLatLng
-            var radM   = this.radiusMeters;
-
+            var vpt    = vm.getPoint(); // GLatLng
+            
             /* draw vertice circle */
-            var circle = jsNewGCircle(vPT, radM, this.shapeColor, 1, 0.9, this.shapeColor, 0.1);
-            this.corridor.push(circle);
-            circle.setMap(this.googleMap); // this.googleMap.addOverlay(circlePoly);
-            bounds.extend(vPT);
+            var crLat  = geoRadians(vpt.lat());  // radians
+            var crLon  = geoRadians(vpt.lng());  // radians
+            var d      = this.radiusMeters / EARTH_RADIUS_METERS;
+            var circlePts = [];
+            for (x = 0; x <= 360; x += 6) {         // 6 degrees (saves memory, & it still looks like a circle)
+                var xrad  = geoRadians(x);          // radians
+                var rrLat = Math.asin(Math.sin(crLat) * Math.cos(d) + Math.cos(crLat) * Math.sin(d) * Math.cos(xrad));
+                var rrLon = crLon + Math.atan2(Math.sin(xrad) * Math.sin(d) * Math.cos(crLat), Math.cos(d)-Math.sin(crLat) * Math.sin(rrLat));
+                var pt    = jsNewGLatLng(geoDegrees(rrLat),geoDegrees(rrLon));
+                circlePts.push(pt);
+            }
+            var circlePoly = jsNewGPolygon(circlePts, this.shapeColor, 1, 0.9, this.shapeColor, 0.1);
+            this.corridor.push(circlePoly);
+            //this.googleMap.addOverlay(circlePoly);
+			circlePoly.setMap(this.googleMap);
+            bounds.extend(vpt);
             
             /* draw connecting corridor */
             if (lastPT != null) {
                 var ptA = lastPT; // GLatLng
-                var ptB = vPT;    // GLatLng
+                var ptB = vpt;    // GLatLng
                 var hAB = geoHeading(ptA.lat(), ptA.lng(), ptB.lat(), ptB.lng()) - 90.0; // perpendicular
-                var rp1 = geoRadiusPoint(ptA.lat(), ptA.lng(), radM, hAB        ); // JSMapPoint
-                var rp2 = geoRadiusPoint(ptB.lat(), ptB.lng(), radM, hAB        ); // JSMapPoint
-                var rp3 = geoRadiusPoint(ptB.lat(), ptB.lng(), radM, hAB + 180.0); // JSMapPoint
-                var rp4 = geoRadiusPoint(ptA.lat(), ptA.lng(), radM, hAB + 180.0); // JSMapPoint
+                var rp1 = geoRadiusPoint(ptA.lat(), ptA.lng(), this.radiusMeters, hAB        ); // JSMapPoint
+                var rp2 = geoRadiusPoint(ptB.lat(), ptB.lng(), this.radiusMeters, hAB        ); // JSMapPoint
+                var rp3 = geoRadiusPoint(ptB.lat(), ptB.lng(), this.radiusMeters, hAB + 180.0); // JSMapPoint
+                var rp4 = geoRadiusPoint(ptA.lat(), ptA.lng(), this.radiusMeters, hAB + 180.0); // JSMapPoint
                 var rectPts = [];
                 rectPts.push(jsNewGLatLng(rp1.lat,rp1.lon));
                 rectPts.push(jsNewGLatLng(rp2.lat,rp2.lon));
@@ -1937,9 +1756,9 @@ CorridorGeozone.prototype.drawCorridor = function()
                 rectPts.push(jsNewGLatLng(rp1.lat,rp1.lon));
                 var rectPoly = jsNewGPolygon(rectPts, this.shapeColor, 1, 0.9, this.shapeColor, 0.1);
                 this.corridor.push(rectPoly);
-                rectPoly.setMap(this.googleMap); // this.googleMap.addOverlay(rectPoly);
+                this.googleMap.addOverlay(rectPoly);
             }
-            lastPT = vPT; // GLatLng
+            lastPT = vpt; // GLatLng
             
         }
     }
@@ -1951,14 +1770,16 @@ CorridorGeozone.prototype.remove = function()
     if (this.verticeMarkers != null) {
         for (var i = 0; i < this.verticeMarkers.length; i++) {
             if (this.verticeMarkers[i].isVisible) { // corridor vertice
-                this.verticeMarkers[i].setMap(null);
+                //this.googleMap.removeOverlay(this.verticeMarkers[i]);
+				this.verticeMarkers[i].setMap(null);
                 this.verticeMarkers[i].isVisible = false;
             }
         }
     }
     if (this.corridor != null) {
         for (var i = 0; i < this.corridor.length; i++) {
-            this.corridor[i].setMap(null);
+            //this.googleMap.removeOverlay(this.corridor[i]);
+			this.corridor[i].setMap(null);
         }
     }
 };
