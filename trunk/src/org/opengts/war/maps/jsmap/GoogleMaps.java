@@ -157,7 +157,7 @@ public class GoogleMaps
             // URL
             if (API_IS_VERS_2) {
                 //sb.append("http://maps.google.com/maps?file=api&v=2");
-		sb.append("https://map.googleapis.com/maps/api/js?v=3.exp");
+		sb.append("https://maps.googleapis.com/maps/api/js?v=3.exp");
             } else {
                 sb.append("http://maps.google.com/maps/api/js?v=" + API_VERSION);
             }
