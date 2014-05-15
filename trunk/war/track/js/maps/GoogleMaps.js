@@ -178,7 +178,7 @@ function jsNewGPolyline(latLonList,
     if (GOOGLE_API_V2) {
        // return new GPolyline(latLonList, borderColor, borderWidth, borderOpacity);
 	   // Upgrade to V3 API
-	   return new google.maps.Polyline({ path: latLonList, strokeColor: borderColor, strokeWeight: borderWeight, strokeOpacity: borderOpacity});
+	   return new google.maps.Polyline({ path: latLonList, strokeColor: borderColor, strokeWeight: borderWidth, strokeOpacity: borderOpacity});
     } else {
         return google.maps.Polyline({
           //map:           this.googleMap,
