@@ -32,8 +32,10 @@ function handleSpeed($link,$devid,$lat,$long) {
     
     // calculate heading and speed
     $heading = calculateBearing($lastlat,$lastlong,$lat,$long);
+    if(is_nan($heading)) $heading=0;
     $speed = calculateSpeed($lastlat,$lastlong,$lat,$long,$deltatime);
-    
+    if(is_nan($speed)) $speed=0;
+
     $retval = array($speed,$heading);
     };
     
@@ -100,6 +102,8 @@ foreach ($a as $idx=>$val) {
   list($branch,$snmpid) = explode(".",$idx);
   list($tree,$node) = explode("::",$branch);
   list($type,$value) = explode(":",$val,2);
+
+  //echo "DEBUG: $snmpid $node $value\n";
 
   switch($node) {
     case 'nmstate': $netmodem[$snmpid][$node] = substr($value,(strpos($value,"(")+1),1);
@@ -174,18 +178,18 @@ $geolocinsertquery = "REPLACE INTO EventData (accountID,deviceID,timestamp,statu
 $statusinsertquery = "REPLACE INTO EventData (accountID,deviceID,timestamp,statusCode,rawData) VALUES ";
 
 foreach($netmodem as $nm) {
-  if($nm['typeid']=="remote(3)") {
+  if((isset($nm['typeid']))&&($nm['typeid']=="remote(3)")) {
     $addr = "";
     $speedhead = array(0,0);
     $stati = array(40000,40001,40002,40002,40002);
     $gid=explode(" ",$nm['nmname']);
     $n = sscanf($nm['geoloc'], "LAT-LONG : [LAT = %fN LONG = %fW", $lat, $long);
     $long = 0-$long;
-    $latency = $nm['latencyvalue'];
+    if(isset($nm['latencyvalue'])) { $latency = $nm['latencyvalue']; } else { $latency=0; };
     if(($latency=="Request timed out")||($latency=="")) $latency=0;
-    if($nm['downsnr']=="") $nm['downsnr']=0;
-    if($nm['upsnr']=="") $nm['upsnr']=0;
-    if($nm['txpower']=="") $nm['txpower']=0;
+    if(!isset($nm['downsnr'])) $nm['downsnr']=0;
+    if(!isset($nm['upsnr'])) $nm['upsnr']=0;
+    if(!isset($nm['txpower'])) $nm['txpower']=0;
 
     if($nm['nmstate']>=2) {$reason = $nm['nmalarms'];} else {$reason = $nm['nmwarnings'];};
     
@@ -208,9 +212,14 @@ $statusinsertquery = substr($statusinsertquery,0,-1);
 
 // Run Data Inserts
 $res = mysql_query($deviceinsertquery);
+if(!$res) echo "DEVICE ERROR: ".mysql_error();
 $res = mysql_query($geolocinsertquery);
+if(!$res) echo "GEOLOC ERROR: ".mysql_error();
 $res = mysql_query($statusinsertquery);
+if(!$res) echo "STATUS ERROR: ".mysql_error();
+//echo "$statusinsertquery\n";
 $res = mysql_query($disabledinsertquery);
+if(!$res) echo "DISABLE ERROR: ".mysql_error();
 
 // Clean Up
 mysql_close($link);
