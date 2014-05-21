@@ -76,7 +76,7 @@ google.maps.Marker.prototype.setInfoWindowHTML = function(html)
 /* open pushpin popup */
 google.maps.Marker.prototype.openPushpinPopup = function()
 {
-    if (this.infoWindow && !this.infoWindowOpen && this.getMap()) {
+    if (this.infoWindow && this.getMap()) {
         this.infoWindow.open(this.getMap(), this);
         this.infoWindowOpen = true;
     }
@@ -821,7 +821,7 @@ JSMap.prototype._showPushpinPopup = function(pp)
 JSMap.prototype._hidePushpinPopup = function(pp)
 {
     //GEvent.trigger(pp.marker,"click");
-	google.maps.event.trigger(pp.marker,"click");
+	//google.maps.event.trigger(pp.marker,"click");
     if (pp) {
         jsmHighlightDetailRow(pp.rcdNdx, false);
     }
