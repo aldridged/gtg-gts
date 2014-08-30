@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
 <title>Solarwinds Graphs</title>
@@ -112,7 +113,7 @@ $(document).ready(function(){
   var plot_24h = $.jqplot ('chartdiv_24h',[out_points_24h,in_points_24h],
     { title:'Bandwidth Usage - Last 24 Hours', 
 	  legend:{show:true}, 
-	  series:[{color:'#FF0000',label:'Upload'},{color:'#0000FF',label:'Download'}], 
+	  series:[{color:'#FF0000',label:'Upload',showMarker:false},{color:'#0000FF',label:'Download',showMarker:false}], 
 	  axes:{ xaxis:{renderer:$.jqplot.DateAxisRenderer, rendererOptions:{tickRenderer:$.jqplot.CanvasAxisTickRenderer},tickOptions:{fontSize:'10pt',fontFamily:'Tahoma',angle:-90},label:'Date'},
 	         yaxis:{min:0,tickOptions:{formatter: function(format, value) { return (value/1000).toFixed(2) + " kbps"; }},label:'Bandwidth'} } 
 	  }); 
@@ -120,7 +121,7 @@ $(document).ready(function(){
   var plot_7d = $.jqplot ('chartdiv_7d',[out_points_7d,in_points_7d],
     { title:'Bandwidth Usage - Last 7 Days', 
 	  legend:{show:true}, 
-	  series:[{color:'#FF0000',label:'Upload'},{color:'#0000FF',label:'Download'}], 
+	  series:[{color:'#FF0000',label:'Upload',showMarker:false},{color:'#0000FF',label:'Download',showMarker:false}], 
 	  axes:{ xaxis:{renderer:$.jqplot.DateAxisRenderer, rendererOptions:{tickRenderer:$.jqplot.CanvasAxisTickRenderer},tickOptions:{fontSize:'10pt',fontFamily:'Tahoma',angle:-90},label:'Date'},
 	         yaxis:{min:0,tickOptions:{formatter: function(format, value) { return (value/1000).toFixed(2) + " kbps"; }},label:'Bandwidth'} } 
 	  });
@@ -128,7 +129,7 @@ $(document).ready(function(){
   var plot_30d = $.jqplot ('chartdiv_30d',[out_points_30d,in_points_30d],
     { title:'Bandwidth Usage - Last 30 Days', 
 	  legend:{show:true}, 
-	  series:[{color:'#FF0000',label:'Upload'},{color:'#0000FF',label:'Download'}], 
+	  series:[{color:'#FF0000',label:'Upload',showMarker:false},{color:'#0000FF',label:'Download',showMarker:false}], 
 	  axes:{ xaxis:{renderer:$.jqplot.DateAxisRenderer, rendererOptions:{tickRenderer:$.jqplot.CanvasAxisTickRenderer},tickOptions:{fontSize:'10pt',fontFamily:'Tahoma',angle:-90},label:'Date'},
 	         yaxis:{min:0,tickOptions:{formatter: function(format, value) { return (value/1000).toFixed(2) + " kbps"; }},label:'Bandwidth'} } 
 	  });
@@ -141,8 +142,14 @@ $(document).ready(function(){
 catch(Exception e){e.printStackTrace();}
 finally{
 if(rs!=null) rs.close();
+if(rs7!=null) rs7.close();
+if(rs30!=null) rs30.close();
 if(s!=null) s.close();
+if(s7!=null) s7.close();
+if(s30!=null) s30.close();
 if(con!=null) con.close();
+if(con7!=null) con7.close();
+if(con30!=null) con30.close();
 }
 
 %>
