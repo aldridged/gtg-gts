@@ -111,25 +111,28 @@ var in_points_30d = [<%= inpts_30d %>];
 
 $(document).ready(function(){
   var plot_24h = $.jqplot ('chartdiv_24h',[out_points_24h,in_points_24h],
-    { title:'Bandwidth Usage - Last 24 Hours', 
+    { title:'Bandwidth Usage - Last 24 Hours',
+	  stackSeries:true,
 	  legend:{show:true}, 
-	  series:[{color:'#FF0000',label:'Upload',showMarker:false},{color:'#0000FF',label:'Download',showMarker:false}], 
+	  series:[{color:'rgba(255,0,0,0.8)',label:'Upload',showMarker:false,fill:true},{color:'rgba(0,0,255,0.8)',label:'Download',showMarker:false,fill:true}], 
 	  axes:{ xaxis:{renderer:$.jqplot.DateAxisRenderer, rendererOptions:{tickRenderer:$.jqplot.CanvasAxisTickRenderer},tickOptions:{fontSize:'10pt',fontFamily:'Tahoma',angle:-90},label:'Date'},
 	         yaxis:{min:0,tickOptions:{formatter: function(format, value) { return (value/1000).toFixed(2) + " kbps"; }},label:'Bandwidth'} } 
 	  }); 
 	  
   var plot_7d = $.jqplot ('chartdiv_7d',[out_points_7d,in_points_7d],
     { title:'Bandwidth Usage - Last 7 Days', 
+	  stackSeries:true,
 	  legend:{show:true}, 
-	  series:[{color:'#FF0000',label:'Upload',showMarker:false},{color:'#0000FF',label:'Download',showMarker:false}], 
+	  series:[{color:'rgba(255,0,0,0.8)',label:'Upload',showMarker:false,fill:true},{color:'rgba(0,0,255,0.8)',label:'Download',showMarker:false,fill:true}],
 	  axes:{ xaxis:{renderer:$.jqplot.DateAxisRenderer, rendererOptions:{tickRenderer:$.jqplot.CanvasAxisTickRenderer},tickOptions:{fontSize:'10pt',fontFamily:'Tahoma',angle:-90},label:'Date'},
 	         yaxis:{min:0,tickOptions:{formatter: function(format, value) { return (value/1000).toFixed(2) + " kbps"; }},label:'Bandwidth'} } 
 	  });
 
   var plot_30d = $.jqplot ('chartdiv_30d',[out_points_30d,in_points_30d],
-    { title:'Bandwidth Usage - Last 30 Days', 
+    { title:'Bandwidth Usage - Last 30 Days',
+      stackSeries:true,	
 	  legend:{show:true}, 
-	  series:[{color:'#FF0000',label:'Upload',showMarker:false},{color:'#0000FF',label:'Download',showMarker:false}], 
+	  series:[{color:'rgba(255,0,0,0.8)',label:'Upload',showMarker:false,fill:true},{color:'rgba(0,0,255,0.8)',label:'Download',showMarker:false,fill:true}],
 	  axes:{ xaxis:{renderer:$.jqplot.DateAxisRenderer, rendererOptions:{tickRenderer:$.jqplot.CanvasAxisTickRenderer},tickOptions:{fontSize:'10pt',fontFamily:'Tahoma',angle:-90},label:'Date'},
 	         yaxis:{min:0,tickOptions:{formatter: function(format, value) { return (value/1000).toFixed(2) + " kbps"; }},label:'Bandwidth'} } 
 	  });
