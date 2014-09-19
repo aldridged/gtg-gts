@@ -192,15 +192,21 @@ foreach($netmodem as $nm) {
     if(!isset($nm['txpower'])) $nm['txpower']=0;
 
     if($nm['nmstate']>=2) {$reason = $nm['nmalarms'];} else {$reason = $nm['nmwarnings'];};
+
+    if(stripos($nm['nmname'],"hotspot")!==false) { $nm['nmname'] = "A: ".$nm['nmname']; }; //If hotspot add A to render first
     
     if((stripos($gid[0],"Bordelon-")!==false)||($gid[0]=="L&M")) {
       $addr=handleGeozone($link,$nm['nmid'],$lat,$long);
       $speedhead=handleSpeed($link,$nm['nmid'],$lat,$long);
       };
+	  
+	// Put hotspots 5 seconds in the past so they get rendered last
+	if(stripos($nm['nmname'],"hotspot")!==false) { $instime = time()-5; }
+	else { $instime = time(); };
 
-    $deviceinsertquery .= "('gtg',".$nm['nmid'].",'".$gid[0]."','netmodem','".$nm['netdid']."','".$nm['nmid']."','".$nm['nmname']."','".$nm['nmname']."',1,".time().",".$stati[$nm['nmstate']].",'".$nm['ethipadr']."','".$reason."',".$nm['downsnr'].",".$nm['upsnr'].",".$nm['txpower'].",".$latency."),";
-    if($n>0) { $geolocinsertquery .= "('gtg',".$nm['nmid'].",".time().",61472,".$lat.",".$long.",'".$addr."',".$speedhead[1].",".$speedhead[0]."),"; };
-    $statusinsertquery .= "('gtg',".$nm['nmid'].",".time().",".$stati[$nm['nmstate']].",'".$reason."'),";
+    $deviceinsertquery .= "('gtg',".$nm['nmid'].",'".$gid[0]."','netmodem','".$nm['netdid']."','".$nm['nmid']."','".$nm['nmname']."','".$nm['nmname']."',1,".$instime.",".$stati[$nm['nmstate']].",'".$nm['ethipadr']."','".$reason."',".$nm['downsnr'].",".$nm['upsnr'].",".$nm['txpower'].",".$latency."),";
+    if($n>0) { $geolocinsertquery .= "('gtg',".$nm['nmid'].",".$instime.",61472,".$lat.",".$long.",'".$addr."',".$speedhead[1].",".$speedhead[0]."),"; };
+    $statusinsertquery .= "('gtg',".$nm['nmid'].",".$instime.",".$stati[$nm['nmstate']].",'".$reason."'),";
     };
   };
 
