@@ -66,9 +66,9 @@ con30 = java.sql.DriverManager.getConnection(url, id, pass);
 cnfex.printStackTrace();
 
 }
-String sql = "select [ITD].NodeID, [ITD].InterfaceID, [Nodes].IP_Address, [ITD].DateTime, [ITD].In_Averagebps, [ITD].Out_Averagebps from InterfaceTraffic_Detail as ITD left join Nodes on [Nodes].NodeID=[ITD].NodeID where IP_Address='"+ipaddr+"' and DateTime >= '"+dfm.format(now_24h)+"' and Archive=0 order by NodeID,InterfaceID;";
-String sql7d = "select [ITD].NodeID, [ITD].InterfaceID, [Nodes].IP_Address, [ITD].DateTime, [ITD].In_Averagebps, [ITD].Out_Averagebps from InterfaceTraffic_Detail as ITD left join Nodes on [Nodes].NodeID=[ITD].NodeID where IP_Address='"+ipaddr+"' and DateTime >= '"+dfm.format(now_7d)+"' and Archive=0 order by NodeID,InterfaceID;";
-String sql30d = "select [ITD].NodeID, [ITD].InterfaceID, [Nodes].IP_Address, [ITD].DateTime, [ITD].In_Averagebps, [ITD].Out_Averagebps from InterfaceTraffic_Detail as ITD left join Nodes on [Nodes].NodeID=[ITD].NodeID where IP_Address='"+ipaddr+"' and DateTime >= '"+dfm.format(now_30d)+"' and Archive=0 order by NodeID,InterfaceID;";
+String sql = "select [ITD].NodeID, [ITD].InterfaceID, [Nodes].IP_Address, [ITD].DateTime, [ITD].In_Averagebps, [ITD].Out_Averagebps from InterfaceTraffic_Detail as ITD left join Nodes on [Nodes].NodeID=[ITD].NodeID where IP_Address='"+ipaddr+"' and DateTime >= '"+dfm.format(now_24h)+"' and Archive=0 order by DateTime,NodeID,InterfaceID asc;";
+String sql7d = "select [ITD].NodeID, [ITD].InterfaceID, [Nodes].IP_Address, [ITD].DateTime, [ITD].In_Averagebps, [ITD].Out_Averagebps from InterfaceTraffic_Detail as ITD left join Nodes on [Nodes].NodeID=[ITD].NodeID where IP_Address='"+ipaddr+"' and DateTime >= '"+dfm.format(now_7d)+"' and Archive=0 order by DateTime,NodeID,InterfaceID asc;";
+String sql30d = "select [ITD].NodeID, [ITD].InterfaceID, [Nodes].IP_Address, [ITD].DateTime, [ITD].In_Averagebps, [ITD].Out_Averagebps from InterfaceTraffic_Detail as ITD left join Nodes on [Nodes].NodeID=[ITD].NodeID where IP_Address='"+ipaddr+"' and DateTime >= '"+dfm.format(now_30d)+"' and Archive=0 order by DateTime,NodeID,InterfaceID asc;";
 try{
 s = con.createStatement();
 s7 = con7.createStatement();
@@ -81,12 +81,16 @@ rs30 = s30.executeQuery(sql30d);
 <%
 String outpts_24h = "";
 String outpts_7d = "";
+Integer i1=0;
 Integer i7=0;
 Integer i30=0;
 String outpts_30d = "";
-while( rs.next() ){ outpts_24h = outpts_24h + "['" + rs.getString("DateTime") + "'," + rs.getString("Out_Averagebps") + "],"; };
-while( rs7.next() ){ if(i7%4==0) {outpts_7d = outpts_7d + "['" + rs7.getString("DateTime") + "'," + rs7.getString("Out_Averagebps") + "],";}; i7++; };
-while( rs30.next() ){ if(i30%16==0) {outpts_30d = outpts_30d + "['" + rs30.getString("DateTime") + "'," + rs30.getString("Out_Averagebps") + "],";}; i30++; };
+while( rs.next() ){ if(i1%2==0) {outpts_24h = outpts_24h + "['" + rs.getString("DateTime") + "'," + rs.getString("Out_Averagebps") + "],";}; i1++; };
+while( rs7.next() ){ if(i7%8==0) {outpts_7d = outpts_7d + "['" + rs7.getString("DateTime") + "'," + rs7.getString("Out_Averagebps") + "],";}; i7++; };
+while( rs30.next() ){ if(i30%32==0) {outpts_30d = outpts_30d + "['" + rs30.getString("DateTime") + "'," + rs30.getString("Out_Averagebps") + "],";}; i30++; };
+outpts_24h = outpts_24h.substring(0, outpts_24h.length()-1);
+outpts_7d = outpts_7d.substring(0, outpts_7d.length()-1);
+outpts_30d = outpts_30d.substring(0, outpts_30d.length()-1);
 %>
 <script language="javascript" type="text/javascript">
 var out_points_24h = [<%= outpts_24h %>];
@@ -98,12 +102,16 @@ rs7 = s7.executeQuery(sql7d);
 rs30 = s30.executeQuery(sql30d);
 String inpts_24h = "";
 String inpts_7d = "";
+i1 = 0;
 i7 = 0;
 i30 = 0;
 String inpts_30d = "";
-while( rs.next() ){ inpts_24h = inpts_24h + "['" + rs.getString("DateTime") + "'," + rs.getString("In_Averagebps") + "],"; };
-while( rs7.next() ){ if(i7%4==0) {inpts_7d = inpts_7d + "['" + rs7.getString("DateTime") + "'," + rs7.getString("In_Averagebps") + "],";}; i7++; };
-while( rs30.next() ){ if(i30%16==0) {inpts_30d = inpts_30d + "['" + rs30.getString("DateTime") + "'," + rs30.getString("In_Averagebps") + "],";}; i30++; };
+while( rs.next() ){ if(i1%2==0) {inpts_24h = inpts_24h + "['" + rs.getString("DateTime") + "'," + rs.getString("In_Averagebps") + "],";}; i1++; };
+while( rs7.next() ){ if(i7%8==0) {inpts_7d = inpts_7d + "['" + rs7.getString("DateTime") + "'," + rs7.getString("In_Averagebps") + "],";}; i7++; };
+while( rs30.next() ){ if(i30%32==0) {inpts_30d = inpts_30d + "['" + rs30.getString("DateTime") + "'," + rs30.getString("In_Averagebps") + "],";}; i30++; };
+inpts_24h = inpts_24h.substring(0, inpts_24h.length()-1);
+inpts_7d = inpts_7d.substring(0, inpts_7d.length()-1);
+inpts_30d = inpts_30d.substring(0, inpts_30d.length()-1);
 %>
 var in_points_24h = [<%= inpts_24h %>];
 var in_points_7d = [<%= inpts_7d %>];
