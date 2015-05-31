@@ -66,9 +66,9 @@ con30 = java.sql.DriverManager.getConnection(url, id, pass);
 cnfex.printStackTrace();
 
 }
-String sql = "select [ITD].NodeID, [ITD].InterfaceID, [Nodes].IP_Address, [ITD].DateTime, [ITD].In_Averagebps, [ITD].Out_Averagebps from InterfaceTraffic_Detail as ITD left join Nodes on [Nodes].NodeID=[ITD].NodeID where IP_Address='"+ipaddr+"' and DateTime >= '"+dfm.format(now_24h)+"' and Archive=0 order by DateTime,NodeID,InterfaceID asc;";
-String sql7d = "select [ITD].NodeID, [ITD].InterfaceID, [Nodes].IP_Address, [ITD].DateTime, [ITD].In_Averagebps, [ITD].Out_Averagebps from InterfaceTraffic_Detail as ITD left join Nodes on [Nodes].NodeID=[ITD].NodeID where IP_Address='"+ipaddr+"' and DateTime >= '"+dfm.format(now_7d)+"' and Archive=0 order by DateTime,NodeID,InterfaceID asc;";
-String sql30d = "select [ITD].NodeID, [ITD].InterfaceID, [Nodes].IP_Address, [ITD].DateTime, [ITD].In_Averagebps, [ITD].Out_Averagebps from InterfaceTraffic_Detail as ITD left join Nodes on [Nodes].NodeID=[ITD].NodeID where IP_Address='"+ipaddr+"' and DateTime >= '"+dfm.format(now_30d)+"' and Archive=0 order by DateTime,NodeID,InterfaceID asc;";
+String sql = "select [ITD].NodeID, [ITD].InterfaceID, [Nodes].IP_Address, [ITD].DateTime, [ITD].In_Averagebps, [ITD].Out_Averagebps from InterfaceTraffic_Detail as ITD left join Nodes on [Nodes].NodeID=[ITD].NodeID where IP_Address='"+ipaddr+"' and DateTime >= '"+dfm.format(now_24h)+"' order by DateTime,NodeID,InterfaceID asc;";
+String sql7d = "select [ITD].NodeID, [ITD].InterfaceID, [Nodes].IP_Address, [ITD].DateTime, [ITD].In_Averagebps, [ITD].Out_Averagebps from InterfaceTraffic_Detail as ITD left join Nodes on [Nodes].NodeID=[ITD].NodeID where IP_Address='"+ipaddr+"' and DateTime >= '"+dfm.format(now_7d)+"' order by DateTime,NodeID,InterfaceID asc;";
+String sql30d = "select [ITD].NodeID, [ITD].InterfaceID, [Nodes].IP_Address, [ITD].DateTime, [ITD].In_Averagebps, [ITD].Out_Averagebps from InterfaceTraffic_Detail as ITD left join Nodes on [Nodes].NodeID=[ITD].NodeID where IP_Address='"+ipaddr+"' and DateTime >= '"+dfm.format(now_30d)+"' order by DateTime,NodeID,InterfaceID asc;";
 try{
 s = con.createStatement();
 s7 = con7.createStatement();
